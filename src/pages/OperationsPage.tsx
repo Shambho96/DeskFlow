@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Grid,
-  Search,
   Printer,
   Lock,
   Maximize2,
@@ -13,7 +12,6 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
-  Layers,
   Coffee,
   SunMedium,
   MoonStar,
@@ -26,7 +24,6 @@ import { useModal } from '../context/ModalContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Input } from '../components/ui/Input';
 import { Tabs, TabsContent } from '../components/ui/Tabs';
 import { cn, formatCurrency } from '../lib/utils';
 import type { RoomStatus } from '../types/hotel';
@@ -120,30 +117,12 @@ export const OperationsPage: React.FC = () => {
     }
   };
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [sourceFilter, setSourceFilter] = useState('ALL');
-
   const setQuickDate = (type: 'yesterday' | 'today' | 'tomorrow') => {
     const base = new Date('2026-09-24');
     if (type === 'yesterday') base.setDate(base.getDate() - 1);
     if (type === 'tomorrow') base.setDate(base.getDate() + 1);
     setSelectedDate(base.toISOString().split('T')[0]);
   };
-
-  const filteredReservations = reservations.filter(res => {
-    const matchesSearch =
-      res.guestName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      res.phone.includes(searchQuery) ||
-      res.roomNumber.includes(searchQuery) ||
-      res.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || res.status === statusFilter;
-    const matchesSource =
-      sourceFilter === 'ALL' ||
-      (sourceFilter === 'DIRECT' && res.source.includes('Direct')) ||
-      (sourceFilter === 'OTA' && (res.source.includes('Booking') || res.source.includes('Agoda')));
-    return matchesSearch && matchesStatus && matchesSource;
-  });
 
   const matchesStatusPill = (res: (typeof reservations)[0]) => {
     if (statusPillFilter === 'ALL') return true;
@@ -198,13 +177,6 @@ export const OperationsPage: React.FC = () => {
               title="Tape Chart Grid View"
             >
               <Grid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setActiveSubTab('all')}
-              className={cn('p-1.5 rounded-lg transition-all', activeSubTab === 'all' ? 'bg-[var(--card)] text-[var(--primary)] shadow-xs font-bold' : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]')}
-              title="Master Directory View"
-            >
-              <Layers className="w-4 h-4" />
             </button>
           </div>
 
@@ -590,74 +562,6 @@ export const OperationsPage: React.FC = () => {
                       ))}
                     </React.Fragment>
                   ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="all" className="pt-4">
-          <Card className="border-[var(--border)] shadow-sm">
-            <CardHeader className="p-4 border-b border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 flex-1 max-w-sm">
-                <Search className="w-4 h-4 text-[var(--muted-foreground)]" />
-                <Input placeholder="Filter by guest name, phone, or ID..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-8 text-xs rounded-lg" />
-              </div>
-              <div className="flex items-center gap-2">
-                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-8 text-xs rounded-lg border border-[var(--input)] bg-[var(--background)] text-[var(--foreground)] px-2 font-semibold">
-                  <option value="ALL">Status: All</option>
-                  <option value="RESERVED">Confirmed</option>
-                  <option value="CHECKED_IN">Checked In</option>
-                  <option value="CHECKED_OUT">Checked Out</option>
-                </select>
-                <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)} className="h-8 text-xs rounded-lg border border-[var(--input)] bg-[var(--background)] text-[var(--foreground)] px-2 font-semibold">
-                  <option value="ALL">Source: All</option>
-                  <option value="DIRECT">Direct Walk-In / Web</option>
-                  <option value="OTA">OTA (Booking/Agoda)</option>
-                </select>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead>
-                  <tr className="border-b border-[var(--border)] bg-[var(--muted)] text-[var(--muted-foreground)] font-bold">
-                    <th className="p-3">Booking ID</th>
-                    <th className="p-3">Guest Name &amp; Phone</th>
-                    <th className="p-3">Room</th>
-                    <th className="p-3">Dates</th>
-                    <th className="p-3 text-right">Total</th>
-                    <th className="p-3 text-right">Paid</th>
-                    <th className="p-3 text-right">Balance</th>
-                    <th className="p-3 text-center">Status</th>
-                    <th className="p-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]">
-                  {filteredReservations.map(res => {
-                    const balance = res.totalAmount - res.paidAmount;
-                    return (
-                      <tr key={res.id} className="hover:bg-[var(--muted)]/40 transition-colors">
-                        <td className="p-3 font-mono font-bold text-[var(--primary)]">{res.id}</td>
-                        <td className="p-3">
-                          <p className="font-bold text-[var(--foreground)]">{res.guestName}</p>
-                          <p className="text-[10px] text-[var(--muted-foreground)]">{res.phone}</p>
-                        </td>
-                        <td className="p-3 font-mono font-bold text-[var(--foreground)]">Room {res.roomNumber}</td>
-                        <td className="p-3 text-[11px] text-[var(--muted-foreground)]">{res.checkIn} → {res.checkOut}</td>
-                        <td className="p-3 text-right font-semibold">{formatCurrency(res.totalAmount)}</td>
-                        <td className="p-3 text-right font-semibold text-emerald-600">{formatCurrency(res.paidAmount)}</td>
-                        <td className="p-3 text-right font-bold text-amber-500">{formatCurrency(balance)}</td>
-                        <td className="p-3 text-center">
-                          <Badge variant={res.status === 'CHECKED_IN' ? 'clean' : 'dirty'}>{res.status}</Badge>
-                        </td>
-                        <td className="p-3 text-right">
-                          <Button size="sm" variant="outline" className="h-7 text-[11px] rounded-lg font-bold" onClick={() => openFolio(res)}>
-                            View Folio
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
                 </tbody>
               </table>
             </CardContent>

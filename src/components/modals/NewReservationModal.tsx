@@ -133,8 +133,8 @@ export const NewReservationModal: React.FC = () => {
           {/* Stepper Progress Bar */}
           <div className="grid grid-cols-3 gap-2 mt-5">
             {[
-              { num: 1, label: 'Stay & Room' },
-              { num: 2, label: 'Guest Profile' },
+              { num: 1, label: 'Guest Profile' },
+              { num: 2, label: 'Stay & Room' },
               { num: 3, label: 'Billing & Settle' }
             ].map((s) => (
               <div
@@ -158,8 +158,104 @@ export const NewReservationModal: React.FC = () => {
 
         {/* STEP CONTENT BODY */}
         <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
-          {/* STEP 1: STAY & ROOM */}
+          {/* STEP 1: GUEST PROFILE */}
           {step === 1 && (
+            <div className="space-y-4 text-left">
+              <div className="p-3 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-xs flex items-center justify-between">
+                <span className="text-[var(--primary)] font-semibold flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4" /> Guest CRM Auto-lookup
+                </span>
+                <span className="text-[10px] text-[var(--muted-foreground)]">Type '98450' to test auto-fill</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
+                    Phone Number
+                  </label>
+                  <Input
+                    placeholder="+91 98450 11234"
+                    value={phone}
+                    onChange={e => handlePhoneChange(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
+                    Full Name
+                  </label>
+                  <Input
+                    placeholder="Arjun Verma"
+                    value={guestName}
+                    onChange={e => setGuestName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
+                    Email Address
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="arjun@example.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
+                    Government ID Type
+                  </label>
+                  <select
+                    value={idType}
+                    onChange={e => setIdType(e.target.value)}
+                    className="w-full h-9 rounded-md border border-[var(--input)] bg-[var(--background)] px-3 text-xs text-[var(--foreground)]"
+                  >
+                    <option value="Aadhaar">Aadhaar Card</option>
+                    <option value="Passport">Passport</option>
+                    <option value="Driving License">Driving License</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
+                  Document ID Number
+                </label>
+                <Input
+                  placeholder="4521-8890-1123"
+                  value={idNumber}
+                  onChange={e => setIdNumber(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-2">
+                  Special Requests & Tags
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['High Floor', 'Late Arrival', 'Extra Towels', 'Quiet Room', 'Airport Transfer', 'Ocean View'].map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleSpecialRequest(tag)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        specialRequests.includes(tag)
+                          ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                          : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: STAY & ROOM */}
+          {step === 2 && (
             <div className="space-y-5 text-left">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -259,102 +355,6 @@ export const NewReservationModal: React.FC = () => {
                       }`}
                     >
                       {rm.roomNumber} ({rm.status})
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: GUEST PROFILE */}
-          {step === 2 && (
-            <div className="space-y-4 text-left">
-              <div className="p-3 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-xs flex items-center justify-between">
-                <span className="text-[var(--primary)] font-semibold flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4" /> Guest CRM Auto-lookup
-                </span>
-                <span className="text-[10px] text-[var(--muted-foreground)]">Type '98450' to test auto-fill</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
-                    Phone Number
-                  </label>
-                  <Input
-                    placeholder="+91 98450 11234"
-                    value={phone}
-                    onChange={e => handlePhoneChange(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
-                    Full Name
-                  </label>
-                  <Input
-                    placeholder="Arjun Verma"
-                    value={guestName}
-                    onChange={e => setGuestName(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
-                    Email Address
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="arjun@example.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
-                    Government ID Type
-                  </label>
-                  <select
-                    value={idType}
-                    onChange={e => setIdType(e.target.value)}
-                    className="w-full h-9 rounded-md border border-[var(--input)] bg-[var(--background)] px-3 text-xs text-[var(--foreground)]"
-                  >
-                    <option value="Aadhaar">Aadhaar Card</option>
-                    <option value="Passport">Passport</option>
-                    <option value="Driving License">Driving License</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
-                  Document ID Number
-                </label>
-                <Input
-                  placeholder="4521-8890-1123"
-                  value={idNumber}
-                  onChange={e => setIdNumber(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-2">
-                  Special Requests & Tags
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {['High Floor', 'Late Arrival', 'Extra Towels', 'Quiet Room', 'Airport Transfer', 'Ocean View'].map(tag => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleSpecialRequest(tag)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                        specialRequests.includes(tag)
-                          ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                          : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]'
-                      }`}
-                    >
-                      {tag}
                     </button>
                   ))}
                 </div>

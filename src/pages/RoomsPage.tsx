@@ -63,7 +63,6 @@ export const RoomsPage: React.FC = () => {
 
   // Active floor state
   const [activeFloorId, setActiveFloorId] = useState<string>(floors[0]?.id || 'fl-1');
-  const [viewMode, setViewMode] = useState<'normal' | 'combinable'>('normal');
 
   // Generator Form State
   const [selectedFloorId, setSelectedFloorId] = useState('fl-3');
@@ -417,37 +416,10 @@ export const RoomsPage: React.FC = () => {
                 </button>
               )}
             </div>
-
-            {/* View Mode Toggle Button Group */}
-            <div className="flex items-center gap-1 bg-[var(--muted)]/70 p-1 rounded-xl border border-[var(--border)] text-xs font-bold">
-              <button
-                onClick={() => setViewMode('normal')}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg transition-all cursor-pointer',
-                  viewMode === 'normal'
-                    ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-extrabold'
-                    : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                )}
-              >
-                Normal View
-              </button>
-              <button
-                onClick={() => setViewMode('combinable')}
-                className={cn(
-                  'px-3.5 py-1.5 rounded-lg transition-all cursor-pointer',
-                  viewMode === 'combinable'
-                    ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-extrabold'
-                    : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                )}
-              >
-                Combinable View
-              </button>
-            </div>
           </div>
 
           {/* MAIN TWO-COLUMN CANVAS LAYOUT */}
-          {viewMode === 'normal' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
               {/* LEFT SIDEBAR PALETTE PANEL - hidden on mobile, shows above canvas */}
               <div className="lg:col-span-3 space-y-3 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-3 lg:gap-0 pb-2 lg:pb-0">
                 <Card className="border-[var(--border)] bg-[var(--card)] rounded-2xl shadow-xs">
@@ -843,37 +815,7 @@ export const RoomsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          ) : (
-            /* COMBINABLE / MATRIX VIEW FOR ACTIVE FLOOR */
-            <Card className="border-[var(--border)] rounded-2xl">
-              <CardHeader className="p-4 border-b border-[var(--border)]">
-                <CardTitle className="text-sm font-bold flex items-center justify-between">
-                  <span>{activeFloor.name} Matrix Grid View</span>
-                  <Badge variant="outline">{activeFloorCanvasItems.length} Rooms</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                  {activeFloorCanvasItems.map(item => (
-                    <div
-                      key={item.id}
-                      onClick={() => setEditModalItem(item)}
-                      className="p-3 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/50 transition-all font-bold text-xs cursor-pointer group"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm group-hover:text-[var(--primary)]">{item.label}</span>
-                        <Badge variant={item.status === 'DIRTY' ? 'dirty' : 'clean'} className="text-[9px] px-1.5 py-0">
-                          {item.status || 'CLEAN'}
-                        </Badge>
-                      </div>
-                      <p className="text-[10px] text-[var(--muted-foreground)] mt-1">{item.shapeType} Shape • Click to Edit</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+          </TabsContent>
 
         {/* TAB 2: FLOORS & ROOMS LIST */}
         <TabsContent value="list" className="pt-4 space-y-6">
