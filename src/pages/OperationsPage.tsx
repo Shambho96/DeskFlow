@@ -171,8 +171,8 @@ export const OperationsPage: React.FC = () => {
   return (
     <div
       className={cn(
-        'space-y-5 text-left transition-all duration-300',
-        isOpsExpanded && 'fixed inset-0 z-[9999] w-screen h-screen bg-[var(--background)] p-6 overflow-y-auto'
+        'space-y-4 sm:space-y-5 text-left transition-all duration-300',
+        isOpsExpanded && 'fixed inset-0 z-[9999] w-screen h-screen bg-[var(--background)] p-3 sm:p-6 overflow-y-auto'
       )}
     >
       {/* TOP COMMAND HEADER BAR */}
@@ -308,7 +308,7 @@ export const OperationsPage: React.FC = () => {
         </div>
 
         {/* STATUS PILLS SCROLLABLE STRIP */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
           {[
             { id: 'ALL', label: 'All Operations', count: reservations.length, dot: 'bg-emerald-500' },
             { id: 'ARRIVALS', label: "Today's Arrivals", count: reservations.filter(r => r.status === 'RESERVED').length, dot: 'bg-blue-500' },
@@ -369,8 +369,8 @@ export const OperationsPage: React.FC = () => {
             </div>
 
             {expandedShiftSections.breakfast && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left border-collapse min-w-[700px]">
+              <div className="overflow-x-auto -mx-0">
+                <table className="w-full text-xs text-left border-collapse min-w-[640px]">
                   <thead>
                     <tr className="border-b border-[var(--border)] bg-[var(--muted)]/40 text-[var(--muted-foreground)] font-bold text-[11px]">
                       <th className="py-2.5 px-4 w-28">Time</th>
@@ -701,7 +701,7 @@ export const OperationsPage: React.FC = () => {
           </div>
 
           {/* HOUSEKEEPING ROOM CARDS GRID */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
             {rooms
               .filter(rm => housekeepingFloorFilter === 'ALL' || rm.floorId === housekeepingFloorFilter)
               .map(rm => (

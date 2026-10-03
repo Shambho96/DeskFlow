@@ -39,15 +39,15 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-11 gap-6">
-          <TabsTrigger value="profile" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs">
-            1. Profile & Branding
+        <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-auto gap-0 overflow-x-auto no-scrollbar">
+          <TabsTrigger value="profile" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
+            Profile & Branding
           </TabsTrigger>
-          <TabsTrigger value="taxes" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs">
-            2. Taxes & Policies (GST Simulator)
+          <TabsTrigger value="taxes" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
+            Taxes & GST
           </TabsTrigger>
-          <TabsTrigger value="roles" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs">
-            3. Role Permissions Matrix
+          <TabsTrigger value="roles" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
+            Role Permissions
           </TabsTrigger>
         </TabsList>
 
@@ -68,7 +68,7 @@ export const SettingsPage: React.FC = () => {
                   <Input value={hotelName} onChange={e => setHotelName(e.target.value)} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block font-semibold text-[var(--muted-foreground)] mb-1">
                       GSTIN / VAT Tax Registration

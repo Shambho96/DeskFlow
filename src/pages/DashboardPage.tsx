@@ -198,7 +198,7 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6 text-left pb-8">
+    <div className="space-y-4 sm:space-y-6 text-left pb-8">
       {/* PAGE HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -265,96 +265,92 @@ export const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* TOP KPI CARDS */}
+      {/* LEAN & SIMPLE KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Today's Arrivals */}
-        <Card className="hover:border-[var(--primary)]/40 transition-colors">
+        <Card className="border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/40 transition-colors shadow-2xs">
           <CardHeader className="p-4 pb-2">
-            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
-              <span className="font-medium">Today's Arrivals</span>
-              <CalendarCheck className="w-4 h-4 text-[var(--primary)]" />
+            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-medium">
+              <span>Today's Arrivals</span>
+              <CalendarCheck className="w-4 h-4 text-[var(--muted-foreground)]" />
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold text-[var(--foreground)]">{arrivalsExpected} Expected</div>
-            <div className="flex items-center justify-between mt-2 text-[11px]">
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{arrivalsCheckedIn} Checked In</span>
-              <span className="text-amber-500 font-semibold">{arrivalsPending} Pending</span>
+          <CardContent className="p-4 pt-0 space-y-2">
+            <div className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
+              {arrivalsExpected} <span className="text-xs font-normal text-[var(--muted-foreground)]">Expected</span>
             </div>
-            <div className="w-full h-1.5 bg-[var(--muted)] rounded-full mt-2 overflow-hidden flex">
+            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-medium">
+              <span>{arrivalsCheckedIn} Checked In</span>
+              <span>{arrivalsPending} Pending</span>
+            </div>
+            <div className="w-full h-1.5 bg-[var(--muted)] rounded-full overflow-hidden">
               <div
-                className="bg-emerald-500 h-full transition-all duration-300"
+                className="bg-[var(--primary)] h-full transition-all duration-300 rounded-full"
                 style={{ width: `${arrivalsExpected > 0 ? (arrivalsCheckedIn / arrivalsExpected) * 100 : 0}%` }}
-              />
-              <div
-                className="bg-amber-400 h-full transition-all duration-300"
-                style={{ width: `${arrivalsExpected > 0 ? (arrivalsPending / arrivalsExpected) * 100 : 0}%` }}
               />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 2: Today's Departures */}
-        <Card className="hover:border-[var(--primary)]/40 transition-colors">
+        <Card className="border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/40 transition-colors shadow-2xs">
           <CardHeader className="p-4 pb-2">
-            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
-              <span className="font-medium">Today's Departures</span>
-              <CalendarX className="w-4 h-4 text-rose-500" />
+            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-medium">
+              <span>Today's Departures</span>
+              <CalendarX className="w-4 h-4 text-[var(--muted-foreground)]" />
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold text-[var(--foreground)]">{departuresDue} Due</div>
-            <div className="flex items-center justify-between mt-2 text-[11px]">
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{departuresSettled} Settled</span>
-              <span className="text-rose-500 font-bold">{departuresPending} Overdue</span>
+          <CardContent className="p-4 pt-0 space-y-2">
+            <div className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
+              {departuresDue} <span className="text-xs font-normal text-[var(--muted-foreground)]">Due</span>
             </div>
-            <div className="w-full h-1.5 bg-[var(--muted)] rounded-full mt-2 overflow-hidden flex">
+            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-medium">
+              <span>{departuresSettled} Settled</span>
+              <span>{departuresPending} Overdue</span>
+            </div>
+            <div className="w-full h-1.5 bg-[var(--muted)] rounded-full overflow-hidden">
               <div
-                className="bg-emerald-500 h-full transition-all duration-300"
+                className="bg-[var(--primary)] h-full transition-all duration-300 rounded-full"
                 style={{ width: `${departuresDue > 0 ? (departuresSettled / departuresDue) * 100 : 0}%` }}
-              />
-              <div
-                className="bg-rose-500 h-full transition-all duration-300"
-                style={{ width: `${departuresDue > 0 ? (departuresPending / departuresDue) * 100 : 0}%` }}
               />
             </div>
           </CardContent>
         </Card>
 
         {/* Card 3: Occupancy Rate */}
-        <Card className="hover:border-[var(--primary)]/40 transition-colors">
+        <Card className="border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/40 transition-colors shadow-2xs">
           <CardHeader className="p-4 pb-2">
-            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
-              <span className="font-medium">Occupancy Rate</span>
-              <Building className="w-4 h-4 text-indigo-500" />
+            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-medium">
+              <span>Occupancy Rate</span>
+              <Building className="w-4 h-4 text-[var(--muted-foreground)]" />
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
+          <CardContent className="p-4 pt-0 space-y-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[var(--foreground)]">{occupancyPercent}%</span>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3" /> +5.2%
+              <span className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{occupancyPercent}%</span>
+              <span className="text-xs text-[var(--muted-foreground)] font-medium flex items-center gap-0.5">
+                <TrendingUp className="w-3 h-3 text-[var(--primary)]" /> +5.2%
               </span>
             </div>
-            <div className="text-[11px] text-[var(--muted-foreground)] mt-2">
+            <div className="text-xs text-[var(--muted-foreground)] font-medium">
               <span className="font-semibold text-[var(--foreground)]">{occupiedCount}</span> of {rooms.length} Rooms Occupied
             </div>
           </CardContent>
         </Card>
 
         {/* Card 4: Cash Float */}
-        <Card className="hover:border-[var(--primary)]/40 transition-colors">
+        <Card className="border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/40 transition-colors shadow-2xs">
           <CardHeader className="p-4 pb-2">
-            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
-              <span className="font-medium">Current Cash Float</span>
-              <DollarSign className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-medium">
+              <span>Current Cash Float</span>
+              <DollarSign className="w-4 h-4 text-[var(--muted-foreground)]" />
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold font-mono text-[var(--foreground)]">
+          <CardContent className="p-4 pt-0 space-y-2">
+            <div className="text-2xl font-bold font-mono tracking-tight text-[var(--foreground)]">
               {formatCurrency(currentDrawerTotal)}
             </div>
-            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-2 font-medium">
+            <div className="text-xs text-[var(--muted-foreground)] font-medium">
               Active Shift Drawer Cash
             </div>
           </CardContent>
@@ -427,8 +423,8 @@ export const DashboardPage: React.FC = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="p-5 pt-4">
-            <div className="h-64 w-full">
+          <CardContent className="p-3 sm:p-5 pt-4">
+            <div className="h-52 sm:h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 {chartType === 'combo' ? (
                   <ComposedChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -613,7 +609,7 @@ export const DashboardPage: React.FC = () => {
 
       {/* TAGGED & NOTED GUESTS DIALOG */}
       <Dialog open={isTaggedDialogOpen} onOpenChange={setIsTaggedDialogOpen}>
-        <DialogContent className="max-w-3xl bg-[var(--card)] text-[var(--card-foreground)] border-[var(--border)] p-6 shadow-2xl">
+        <DialogContent className="max-w-3xl w-full mx-3 sm:mx-auto bg-[var(--card)] text-[var(--card-foreground)] border-[var(--border)] p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="pb-3 border-b border-[var(--border)]">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">

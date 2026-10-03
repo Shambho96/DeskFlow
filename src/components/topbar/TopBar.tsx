@@ -56,45 +56,45 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
   }, [openSearch]);
 
   return (
-    <header className="h-16 border-b border-[var(--border)] bg-[var(--background)] px-4 flex items-center justify-between sticky top-0 z-30 select-none">
+    <header className="h-14 sm:h-16 border-b border-[var(--border)] bg-[var(--background)] px-3 sm:px-4 flex items-center justify-between sticky top-0 z-30 select-none">
       {/* LEFT: toggle + page title + clock */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] cursor-pointer transition-colors"
+          className="p-2 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] cursor-pointer transition-colors shrink-0"
           title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >
           <PanelLeft className="w-5 h-5" />
         </button>
 
-        <h1 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
+        <h1 className="text-sm font-semibold text-[var(--foreground)] tracking-tight truncate">
           {pageTitle}
         </h1>
 
-        {/* Live Date & Time clock */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--muted)] border border-[var(--border)]">
+        {/* Live Date & Time clock — date hidden on mobile */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--muted)] border border-[var(--border)]">
           <Calendar className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
-          <span className="text-xs font-medium text-[var(--muted-foreground)] hidden sm:inline">
+          <span className="text-xs font-medium text-[var(--muted-foreground)] hidden md:inline">
             {formattedDate}
           </span>
-          <span className="text-[var(--border)] hidden sm:inline">•</span>
+          <span className="text-[var(--border)] hidden md:inline">•</span>
           <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-          <span className="font-mono font-bold text-sm text-[var(--foreground)] tabular-nums tracking-tight">
+          <span className="font-mono font-bold text-xs sm:text-sm text-[var(--foreground)] tabular-nums tracking-tight">
             {formattedTime}
           </span>
         </div>
       </div>
 
       {/* RIGHT: Search + Theme toggle */}
-      <div className="flex items-center gap-2">
-        {/* Search bar */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Search bar — icon-only on mobile */}
         <button
           onClick={openSearch}
-          className="flex items-center gap-2 h-9 px-3.5 rounded-lg border border-[var(--border)] bg-[var(--muted)] text-xs text-[var(--muted-foreground)] hover:border-[var(--primary)]/50 hover:bg-[var(--background)] transition-all cursor-pointer min-w-[180px]"
+          className="flex items-center gap-2 h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-lg border border-[var(--border)] bg-[var(--muted)] text-xs text-[var(--muted-foreground)] hover:border-[var(--primary)]/50 hover:bg-[var(--background)] transition-all cursor-pointer sm:min-w-[160px]"
         >
           <Search className="w-3.5 h-3.5 shrink-0" />
-          <span>Search...</span>
-          <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-[var(--background)] border border-[var(--border)] text-[var(--muted-foreground)] ml-auto">
+          <span className="hidden sm:inline">Search...</span>
+          <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-[var(--background)] border border-[var(--border)] text-[var(--muted-foreground)] ml-auto">
             ⌘K
           </kbd>
         </button>
@@ -102,7 +102,7 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="h-9 w-9 flex items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] cursor-pointer transition-colors border border-[var(--border)]"
+          className="h-8 sm:h-9 w-8 sm:w-9 flex items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] cursor-pointer transition-colors border border-[var(--border)]"
           title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
         >
           {theme === 'dark' ? (

@@ -97,9 +97,9 @@ export const GuestsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 text-left select-none pb-8">
+    <div className="space-y-4 sm:space-y-5 text-left select-none pb-8">
       {/* TOP HEADER & VIEW MODE CONTROLS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-[var(--foreground)] flex items-center gap-2.5">
             Guest Profiles &amp; CRM Directory
@@ -164,10 +164,14 @@ export const GuestsPage: React.FC = () => {
       {/* 1. MASTER-DETAIL SPLIT SCREEN LAYOUT (EXACT MATCHING SCREENSHOT) */}
       {/* ========================================================= */}
       {viewMode === 'split' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[700px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
           
           {/* LEFT COLUMN: GUEST DIRECTORY LIST PANEL (3.5 cols on wide screens) */}
-          <div className="lg:col-span-4 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 flex flex-col justify-between space-y-4 shadow-sm">
+          <div className={cn(
+            'lg:col-span-4 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 flex flex-col space-y-4 shadow-sm',
+            // On mobile hide list if a guest is selected
+            selectedGuest ? 'hidden lg:flex' : 'flex'
+          )}>
             <div className="space-y-3.5">
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -217,7 +221,7 @@ export const GuestsPage: React.FC = () => {
             </div>
 
             {/* Scrollable Guest List */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[540px]">
+            <div className="overflow-y-auto space-y-2 pr-1 max-h-[340px] sm:max-h-[480px] lg:max-h-[600px]">
               {filteredGuests.length === 0 ? (
                 <div className="p-8 text-center text-xs text-[var(--muted-foreground)]">
                   No guest profiles found matching query.
@@ -267,7 +271,11 @@ export const GuestsPage: React.FC = () => {
           </div>
 
           {/* RIGHT COLUMN: GUEST DETAIL VIEW DASHBOARD (8 cols on wide screens) */}
-          <div className="lg:col-span-8 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 flex flex-col justify-between space-y-6 shadow-sm">
+          <div className={cn(
+            'lg:col-span-8 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 sm:p-6 flex flex-col space-y-4 sm:space-y-6 shadow-sm',
+            // On mobile show detail only if a guest is selected
+            !selectedGuest ? 'hidden lg:flex' : 'flex'
+          )}>
             {selectedGuest ? (
               <>
                 {/* TOP BANNER */}
@@ -311,7 +319,7 @@ export const GuestsPage: React.FC = () => {
                       className="h-9 rounded-xl border-[var(--border)] text-xs font-bold gap-1 hover:bg-[var(--muted)]"
                     >
                       <X className="w-4 h-4 text-emerald-500" />
-                      <span>Close</span>
+                      <span className="hidden sm:inline">Close</span>
                     </Button>
 
                     <Button
@@ -326,7 +334,7 @@ export const GuestsPage: React.FC = () => {
                 </div>
 
                 {/* 4 STAT CARDS ROW (EXACT MATCHING SCREENSHOT) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   {/* Card 1: TIER */}
                   <Card className="border-[var(--border)] bg-[var(--background)]/80 p-4 rounded-2xl space-y-3 shadow-2xs">
                     <div className="flex items-center justify-between">

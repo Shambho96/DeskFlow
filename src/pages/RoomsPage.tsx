@@ -346,18 +346,18 @@ export const RoomsPage: React.FC = () => {
       </div>
 
       <Tabs defaultValue="visual" className="w-full">
-        <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-11 gap-6">
-          <TabsTrigger value="visual" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs">
-            1. Visual Floor Canvas Designer
+        <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-auto gap-0 overflow-x-auto no-scrollbar">
+          <TabsTrigger value="visual" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
+            <span className="hidden sm:inline">1. </span>Floor Canvas
           </TabsTrigger>
-          <TabsTrigger value="list" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs">
-            2. Floors &amp; Master Room Directory ({rooms.length})
+          <TabsTrigger value="list" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
+            <span className="hidden sm:inline">2. </span>Room Directory ({rooms.length})
           </TabsTrigger>
-          <TabsTrigger value="categories" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs">
-            3. Room Categories &amp; Pricing ({roomTypes.length})
+          <TabsTrigger value="categories" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
+            <span className="hidden sm:inline">3. </span>Categories ({roomTypes.length})
           </TabsTrigger>
-          <TabsTrigger value="generator" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs">
-            4. Bulk Room Generator
+          <TabsTrigger value="generator" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
+            <span className="hidden sm:inline">4. </span>Generator
           </TabsTrigger>
         </TabsList>
 
@@ -447,9 +447,9 @@ export const RoomsPage: React.FC = () => {
 
           {/* MAIN TWO-COLUMN CANVAS LAYOUT */}
           {viewMode === 'normal' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-[600px]">
-              {/* LEFT SIDEBAR PALETTE PANEL */}
-              <div className="lg:col-span-3 space-y-3 flex flex-col">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+              {/* LEFT SIDEBAR PALETTE PANEL - hidden on mobile, shows above canvas */}
+              <div className="lg:col-span-3 space-y-3 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-3 lg:gap-0 pb-2 lg:pb-0">
                 <Card className="border-[var(--border)] bg-[var(--card)] rounded-2xl shadow-xs">
                   <CardHeader className="p-3.5 border-b border-[var(--border)]">
                     <CardTitle className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] flex items-center justify-between">
@@ -624,7 +624,7 @@ export const RoomsPage: React.FC = () => {
                     }
                   }}
                   className={cn(
-                    'w-full h-[620px] rounded-2xl border relative overflow-hidden shadow-inner select-none transition-all duration-300',
+                    'w-full h-[400px] sm:h-[520px] lg:h-[620px] rounded-2xl border relative overflow-hidden shadow-inner select-none transition-all duration-300',
                     isDraggingOverCanvas
                       ? 'border-2 border-dashed border-[var(--primary)] bg-[var(--primary)]/10 shadow-lg ring-4 ring-[var(--primary)]/20'
                       : theme === 'dark'
