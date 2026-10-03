@@ -6,8 +6,6 @@ import {
   BedDouble,
   Users,
   Settings,
-  HelpCircle,
-  Search,
   MoreHorizontal
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -97,21 +95,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         </div>
       </div>
 
-      {/* BOTTOM: Help + Search + User */}
+      {/* BOTTOM: User */}
       <div className="shrink-0">
-        {/* Utility links */}
-        {!isCollapsed && (
-          <div className="px-3 py-2 space-y-0.5 border-t border-[var(--sidebar-border)]">
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-accent)] transition-all cursor-pointer">
-              <HelpCircle className="w-4 h-4 shrink-0" />
-              <span>Get Help</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--sidebar-accent)] transition-all cursor-pointer">
-              <Search className="w-4 h-4 shrink-0" />
-              <span>Search</span>
-            </button>
-          </div>
-        )}
 
         {/* User Profile */}
         <div className={cn('p-3 border-t border-[var(--sidebar-border)]')}>
