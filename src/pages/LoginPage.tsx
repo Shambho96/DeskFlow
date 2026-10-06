@@ -35,10 +35,10 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
-            Desk<span className="text-[var(--primary)]">Flow</span> — Reception Portal
+            Desk<span className="text-[var(--primary)]">Flow</span> — Operations Portal
           </h1>
-          <p className="text-xs text-[var(--muted-foreground)] mt-1">
-            DeskFlow PMS • Receptionist Sign-In
+          <p className="text-xs text-[var(--muted-foreground)] mt-1 font-medium">
+            Intelligent Hotel Operations Platform • Sign-In
           </p>
         </div>
 

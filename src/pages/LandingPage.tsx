@@ -38,7 +38,7 @@ export const LandingPage: React.FC = () => {
               <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">
                 Desk<span className="text-[var(--primary)] font-extrabold">Flow</span>
               </span>
-              <span className="block text-[10px] text-[var(--muted-foreground)] tracking-widest uppercase font-semibold">Front Desk &amp; PMS Engine</span>
+              <span className="block text-[10px] text-[var(--muted-foreground)] tracking-widest uppercase font-bold">Intelligent Operations Platform</span>
             </div>
           </div>
 
@@ -61,7 +61,7 @@ export const LandingPage: React.FC = () => {
               className="bg-[var(--primary)] hover:opacity-90 text-[var(--primary-foreground)] shadow-lg shadow-[var(--primary)]/25 font-semibold gap-2 rounded-lg"
               onClick={() => navigate('/app/dashboard')}
             >
-              Launch Demo App <ArrowRight className="w-4 h-4" />
+              Launch Platform App <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -73,10 +73,12 @@ export const LandingPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--muted)] border border-[var(--border)] text-xs font-semibold text-[var(--primary)] mb-8 shadow-inner"
+          className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-amber-500/10 border border-indigo-500/30 text-xs font-extrabold text-[var(--foreground)] mb-8 shadow-lg shadow-indigo-500/5 backdrop-blur-md"
         >
+         
           <Sparkles className="w-4 h-4 text-amber-400" />
-          <span>Next-Gen Hotel PMS &amp; Front Desk Platform</span>
+          <span className="tracking-wide">Real-Time Autonomous Hotel Operations Ecosystem</span>
+          
           <ChevronRight className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
         </motion.div>
 
@@ -84,21 +86,18 @@ export const LandingPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-4xl md:text-7xl font-extrabold tracking-tight text-[var(--foreground)] max-w-5xl mx-auto leading-[1.15]"
+          className="text-4xl md:text-6xl font-extrabold tracking-tight text-[var(--foreground)] max-w-5xl mx-auto leading-[1.15]"
         >
-          Run Your Hotel Front Desk at the{' '}
-          <span className="text-[var(--primary)]">
-            Speed of Thought
-          </span>
+          An Intelligent Hotel <span className="text-[var(--primary)]">Operations Platform</span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-6 text-lg md:text-xl text-[var(--muted-foreground)] max-w-3xl mx-auto leading-relaxed"
+          className="mt-6 text-lg md:text-xl text-[var(--muted-foreground)] max-w-3xl mx-auto leading-relaxed font-medium"
         >
-          An ultra-fast receptionist engine with visual tape charts, 30-second check-ins, instant housekeeping sync, and automated GST billing. Built specifically for boutique hotels &amp; luxury resorts.
+          An intelligent hotel operations platform that connects reservations, rooms, housekeeping, maintenance, billings, and guest services in real time
         </motion.p>
 
         <motion.div
