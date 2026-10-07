@@ -42,7 +42,7 @@ interface HotelContextType {
   togglePinNote: (noteId: string) => void;
   reassignRoom: (reservationId: string, newRoomNumber: string) => void;
   updatePayment: (reservationId: string, additionalAmount: number) => void;
-  reassignReservation: (reservationId: string, newRoomNumber: string, newCheckIn: string) => void;
+  reassignReservation: (reservationId: string, newRoomNumber: string, shiftDays: number) => void;
 }
 
 const HotelContext = createContext<HotelContextType | undefined>(undefined);
@@ -225,19 +225,19 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
-  // Reassign Reservation (Room + Date)
-  const reassignReservation = (reservationId: string, newRoomNumber: string, newCheckIn: string) => {
+  // Reassign Reservation (Room + Date Shift)
+  const reassignReservation = (reservationId: string, newRoomNumber: string, shiftDays: number) => {
     setReservations(prev =>
       prev.map(res => {
         if (res.id === reservationId) {
-          // Calculate new checkout to preserve duration
           const oldIn = new Date(res.checkIn);
           const oldOut = new Date(res.checkOut);
-          const durationDays = Math.round((oldOut.getTime() - oldIn.getTime()) / (1000 * 3600 * 24));
           
-          const newIn = new Date(newCheckIn);
-          const newOut = new Date(newIn);
-          newOut.setDate(newIn.getDate() + durationDays);
+          const newIn = new Date(oldIn);
+          newIn.setDate(newIn.getDate() + shiftDays);
+          
+          const newOut = new Date(oldOut);
+          newOut.setDate(newOut.getDate() + shiftDays);
           
           const toISO = (d: Date) => d.toISOString().split('T')[0];
           

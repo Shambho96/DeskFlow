@@ -534,7 +534,11 @@ export const OperationsPage: React.FC = () => {
                             const cellDate = new Date(base); cellDate.setDate(base.getDate() + offset);
                             const coDate = new Date(base); coDate.setDate(base.getDate() + offset + 1);
                             const toISO = (d: Date) => d.toISOString().split('T')[0];
-                            const matchingRes = reservations.find(r => r.roomNumber === rm.roomNumber && r.status !== 'CHECKED_OUT');
+                            const cellDateStr = toISO(cellDate);
+                            const matchingRes = reservations.find(r => {
+                              if (r.roomNumber !== rm.roomNumber || r.status === 'CHECKED_OUT') return false;
+                              return cellDateStr >= r.checkIn && cellDateStr < r.checkOut;
+                            });
                             return (
                               <td
                                 key={offset}
@@ -542,9 +546,17 @@ export const OperationsPage: React.FC = () => {
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={(e) => {
                                   e.preventDefault();
-                                  const resId = e.dataTransfer.getData("text/plain");
-                                  if (resId && (!matchingRes || matchingRes.id === resId)) {
-                                    reassignReservation(resId, rm.roomNumber, toISO(cellDate));
+                                  const dataStr = e.dataTransfer.getData("text/plain");
+                                  try {
+                                    const data = JSON.parse(dataStr);
+                                    if (data.id && (!matchingRes || matchingRes.id === data.id)) {
+                                      const targetTime = new Date(cellDateStr).getTime();
+                                      const sourceTime = new Date(data.sourceCellDate).getTime();
+                                      const shiftDays = Math.round((targetTime - sourceTime) / 86400000);
+                                      reassignReservation(data.id, rm.roomNumber, shiftDays);
+                                    }
+                                  } catch (err) {
+                                    console.error("Invalid drag data", err);
                                   }
                                 }}
                                 className="p-1 border-r border-[var(--border)] h-14 relative cursor-pointer hover:bg-[var(--primary)]/10 transition-colors"
@@ -555,7 +567,10 @@ export const OperationsPage: React.FC = () => {
                                   <div
                                     draggable
                                     onDragStart={(e) => {
-                                      e.dataTransfer.setData("text/plain", matchingRes.id);
+                                      e.dataTransfer.setData("text/plain", JSON.stringify({
+                                        id: matchingRes.id,
+                                        sourceCellDate: cellDateStr
+                                      }));
                                     }}
                                     onClick={e => { e.stopPropagation(); openFolio(matchingRes); }}
                                     className={`h-full rounded-lg p-2 text-white font-semibold text-[10px] flex flex-col justify-between shadow-xs transition-transform hover:scale-[1.02] cursor-grab active:cursor-grabbing ${matchingRes.status === 'CHECKED_IN' ? 'bg-emerald-600 border border-emerald-500' : 'bg-blue-600 border border-blue-500'}`}
