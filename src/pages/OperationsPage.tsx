@@ -154,7 +154,7 @@ export const OperationsPage: React.FC = () => {
         isOpsExpanded && 'fixed inset-0 z-[9999] w-screen h-screen bg-[var(--background)] px-3 sm:px-6 pb-3 sm:pb-6 overflow-y-auto'
       )}
     >
-      {/* TOP COMMAND HEADER BAR */}
+      {/* TOP COMMAND HEADER BAR {} */}
       <div className={cn(
         'p-3.5 bg-[var(--card)] border border-[var(--border)] flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-xs sticky top-0 z-30 backdrop-blur-md',
         isOpsExpanded
