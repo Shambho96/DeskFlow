@@ -151,14 +151,14 @@ export const OperationsPage: React.FC = () => {
     <div
       className={cn(
         'space-y-4 sm:space-y-5 text-left transition-all duration-300',
-        isOpsExpanded && 'fixed inset-0 z-[9999] w-screen h-screen bg-[var(--background)] p-3 sm:p-6 overflow-y-auto'
+        isOpsExpanded && 'fixed inset-0 z-[9999] w-screen h-screen bg-[var(--background)] px-3 sm:px-6 pb-3 sm:pb-6 overflow-y-auto'
       )}
     >
-      {/* TOP COMMAND HEADER BAR */}
+      {/* TOP COMMAND HEADER BAR {} */}
       <div className={cn(
         'p-3.5 bg-[var(--card)] border border-[var(--border)] flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-xs sticky top-0 z-30 backdrop-blur-md',
         isOpsExpanded
-          ? 'rounded-none border-x-0 border-t-0 -mx-6 px-6'
+          ? 'rounded-none border-x-0 border-t-0 -mx-3 sm:-mx-6 px-3 sm:px-6 py-2 sm:py-2.5'
           : 'rounded-2xl'
       )}>
         <div className="flex items-center gap-3 flex-wrap">
