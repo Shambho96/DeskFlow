@@ -47,6 +47,7 @@ export interface Reservation {
   specialRequests?: string[];
   adults?: number;
   children?: number;
+  tags?: string[];
 }
 
 export interface ShiftNote {

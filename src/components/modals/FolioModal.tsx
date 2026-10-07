@@ -5,7 +5,7 @@ import { useHotel } from '../../context/HotelContext';
 import { Dialog, DialogContent, DialogTitle } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { formatCurrency } from '../../lib/utils';
+import { formatCurrency, cn } from '../../lib/utils';
 
 export const FolioModal: React.FC = () => {
   const { isFolioOpen, closeFolio, activeFolioReservation } = useModal();
@@ -81,8 +81,26 @@ export const FolioModal: React.FC = () => {
             </div>
             <div className="text-right">
               <p className="font-bold text-xs">Guest Details:</p>
-              <p className="font-semibold text-sm text-[var(--primary)]">{activeFolioReservation.guestName}</p>
-              <p className="text-[var(--muted-foreground)]">{activeFolioReservation.phone}</p>
+              <div className="flex flex-col items-end gap-1">
+                <p className="font-semibold text-sm text-[var(--primary)]">{activeFolioReservation.guestName}</p>
+                {activeFolioReservation.tags && activeFolioReservation.tags.length > 0 && (
+                  <div className="flex gap-1 justify-end flex-wrap mt-0.5">
+                    {activeFolioReservation.tags.map(tag => (
+                      <span key={tag} className={cn(
+                        "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
+                        tag.toLowerCase() === 'vip' ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" :
+                        tag.toLowerCase() === 'returning' ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" :
+                        tag.toLowerCase() === 'late check-out' ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" :
+                        tag.toLowerCase() === 'allergic' ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" :
+                        "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]"
+                      )}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p className="text-[var(--muted-foreground)] mt-1">{activeFolioReservation.phone}</p>
               <p className="text-[var(--muted-foreground)]">{activeFolioReservation.email}</p>
             </div>
           </div>

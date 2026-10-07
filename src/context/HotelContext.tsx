@@ -42,6 +42,7 @@ interface HotelContextType {
   togglePinNote: (noteId: string) => void;
   reassignRoom: (reservationId: string, newRoomNumber: string) => void;
   updatePayment: (reservationId: string, additionalAmount: number) => void;
+  reassignReservation: (reservationId: string, newRoomNumber: string, newCheckIn: string) => void;
 }
 
 const HotelContext = createContext<HotelContextType | undefined>(undefined);
@@ -224,6 +225,40 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  // Reassign Reservation (Room + Date)
+  const reassignReservation = (reservationId: string, newRoomNumber: string, newCheckIn: string) => {
+    setReservations(prev =>
+      prev.map(res => {
+        if (res.id === reservationId) {
+          // Calculate new checkout to preserve duration
+          const oldIn = new Date(res.checkIn);
+          const oldOut = new Date(res.checkOut);
+          const durationDays = Math.round((oldOut.getTime() - oldIn.getTime()) / (1000 * 3600 * 24));
+          
+          const newIn = new Date(newCheckIn);
+          const newOut = new Date(newIn);
+          newOut.setDate(newIn.getDate() + durationDays);
+          
+          const toISO = (d: Date) => d.toISOString().split('T')[0];
+          
+          // Free up old room if currently checked in (simplified logic for tape chart)
+          if (res.roomNumber !== newRoomNumber) {
+            setRooms(prevRooms =>
+              prevRooms.map(rm => {
+                if (rm.roomNumber === res.roomNumber && res.status === 'CHECKED_IN') return { ...rm, isOccupied: false, status: 'DIRTY' };
+                if (rm.roomNumber === newRoomNumber && res.status === 'CHECKED_IN') return { ...rm, isOccupied: true };
+                return rm;
+              })
+            );
+          }
+          
+          return { ...res, roomNumber: newRoomNumber, checkIn: toISO(newIn), checkOut: toISO(newOut) };
+        }
+        return res;
+      })
+    );
+  };
+
   // Update Payment Balance
   const updatePayment = (reservationId: string, additionalAmount: number) => {
     setReservations(prev =>
@@ -260,6 +295,7 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addShiftNote,
         togglePinNote,
         reassignRoom,
+        reassignReservation,
         updatePayment
       }}
     >

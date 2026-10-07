@@ -37,7 +37,8 @@ export const OperationsPage: React.FC = () => {
     reservations,
     checkInGuest,
     updateRoomStatus,
-    cashRegister
+    cashRegister,
+    reassignReservation
   } = useHotel();
 
   const { openFolio, openNewReservation, openShiftClose } = useModal();
@@ -538,14 +539,26 @@ export const OperationsPage: React.FC = () => {
                               <td
                                 key={offset}
                                 onClick={() => { if (!matchingRes) openNewReservation({ roomNumber: rm.roomNumber, checkIn: toISO(cellDate), checkOut: toISO(coDate) }); }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  const resId = e.dataTransfer.getData("text/plain");
+                                  if (resId && (!matchingRes || matchingRes.id === resId)) {
+                                    reassignReservation(resId, rm.roomNumber, toISO(cellDate));
+                                  }
+                                }}
                                 className="p-1 border-r border-[var(--border)] h-14 relative cursor-pointer hover:bg-[var(--primary)]/10 transition-colors"
                               >
                                 {rm.status === 'OOO' ? (
                                   <div className="h-full rounded-lg bg-rose-500/20 border border-rose-500/40 p-1 flex items-center justify-center text-[10px] text-rose-500 font-bold">OOO</div>
                                 ) : matchingRes ? (
                                   <div
+                                    draggable
+                                    onDragStart={(e) => {
+                                      e.dataTransfer.setData("text/plain", matchingRes.id);
+                                    }}
                                     onClick={e => { e.stopPropagation(); openFolio(matchingRes); }}
-                                    className={`h-full rounded-lg p-2 text-white font-semibold text-[10px] flex flex-col justify-between shadow-xs transition-transform hover:scale-[1.02] ${matchingRes.status === 'CHECKED_IN' ? 'bg-emerald-600 border border-emerald-500' : 'bg-blue-600 border border-blue-500'}`}
+                                    className={`h-full rounded-lg p-2 text-white font-semibold text-[10px] flex flex-col justify-between shadow-xs transition-transform hover:scale-[1.02] cursor-grab active:cursor-grabbing ${matchingRes.status === 'CHECKED_IN' ? 'bg-emerald-600 border border-emerald-500' : 'bg-blue-600 border border-blue-500'}`}
                                   >
                                     <span className="truncate font-bold">{matchingRes.guestName}</span>
                                     <span className="text-[9px] opacity-90 font-mono">{matchingRes.source}</span>

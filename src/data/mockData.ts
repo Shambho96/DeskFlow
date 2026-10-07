@@ -43,7 +43,8 @@ export const MOCK_RESERVATIONS: Reservation[] = [
     idNumber: "4521-8890-1123",
     adults: 2,
     children: 0,
-    specialRequests: ["High Floor", "Late Checkout"]
+    specialRequests: ["High Floor", "Late Checkout"],
+    tags: ["VIP", "Returning"]
   },
   {
     id: "RES-8942",
@@ -64,7 +65,8 @@ export const MOCK_RESERVATIONS: Reservation[] = [
     idNumber: "Z9810293",
     adults: 1,
     children: 0,
-    specialRequests: ["Quiet Room"]
+    specialRequests: ["Quiet Room"],
+    tags: ["Allergic"]
   },
   {
     id: "RES-8943",
@@ -85,7 +87,8 @@ export const MOCK_RESERVATIONS: Reservation[] = [
     idNumber: "GB771029A",
     adults: 2,
     children: 1,
-    specialRequests: ["Extra Towels", "Airport Shuttle"]
+    specialRequests: ["Extra Towels", "Airport Shuttle"],
+    tags: ["VIP", "Late Check-out"]
   },
   {
     id: "RES-8944",

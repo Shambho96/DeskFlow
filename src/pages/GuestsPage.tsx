@@ -298,6 +298,18 @@ export const GuestsPage: React.FC = () => {
                         <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1', getGuestTier(selectedGuest).color)}>
                           <Award className="w-3 h-3" /> {getGuestTier(selectedGuest).name.toUpperCase()}
                         </span>
+                        {selectedGuest.tags && selectedGuest.tags.length > 0 && selectedGuest.tags.map(tag => (
+                          <span key={tag} className={cn(
+                            "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border",
+                            tag.toLowerCase() === 'vip' ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" :
+                            tag.toLowerCase() === 'returning' ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" :
+                            tag.toLowerCase() === 'late check-out' ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" :
+                            tag.toLowerCase() === 'allergic' ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" :
+                            "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]"
+                          )}>
+                            {tag}
+                          </span>
+                        ))}
                       </div>
 
                       <p className="text-xs text-[var(--muted-foreground)] font-mono flex items-center gap-1.5">
