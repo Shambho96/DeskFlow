@@ -125,6 +125,120 @@ export const OperationsPage: React.FC = () => {
     setSelectedDate(base.toISOString().split('T')[0]);
   };
 
+  const handleExportExcel = () => {
+    // Filter bookings relevant for selected date
+    const dayBookings = reservations.filter(
+      r => r.checkIn === selectedDate || r.checkOut === selectedDate || (r.checkIn <= selectedDate && selectedDate <= r.checkOut)
+    );
+    const targetBookings = dayBookings.length > 0 ? dayBookings : reservations;
+
+    // Calculate totals for summary header
+    const totalRevenue = targetBookings.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
+    const totalPaid = targetBookings.reduce((sum, r) => sum + (r.paidAmount || 0), 0);
+    const totalOutstanding = totalRevenue - totalPaid;
+
+    const checkedInCount = targetBookings.filter(r => r.status === 'CHECKED_IN').length;
+    const reservedCount = targetBookings.filter(r => r.status === 'RESERVED').length;
+    const checkedOutCount = targetBookings.filter(r => r.status === 'CHECKED_OUT').length;
+
+    // Build CSV formatted spreadsheet
+    const headers = [
+      'Reservation ID',
+      'Guest Name',
+      'Phone Number',
+      'Email',
+      'Room Number',
+      'Room Category',
+      'Check-In Date',
+      'Check-Out Date',
+      'Nights',
+      'Adults',
+      'Children',
+      'Status',
+      'Total Amount ($)',
+      'Paid Amount ($)',
+      'Outstanding ($)',
+      'Booking Source',
+      'Special Requests'
+    ];
+
+    const rows = targetBookings.map(r => {
+      const d1 = new Date(r.checkIn);
+      const d2 = new Date(r.checkOut);
+      const nights = Math.max(1, Math.round((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)));
+      const outstanding = (r.totalAmount || 0) - (r.paidAmount || 0);
+
+      return [
+        `"${r.id}"`,
+        `"${(r.guestName || '').replace(/"/g, '""')}"`,
+        `"${(r.phone || '').replace(/"/g, '""')}"`,
+        `"${(r.email || '').replace(/"/g, '""')}"`,
+        `"${r.roomNumber}"`,
+        `"${r.roomType}"`,
+        `"${r.checkIn}"`,
+        `"${r.checkOut}"`,
+        nights,
+        r.adults || 1,
+        r.children || 0,
+        `"${r.status}"`,
+        r.totalAmount || 0,
+        r.paidAmount || 0,
+        outstanding,
+        `"${(r.source || 'Direct').replace(/"/g, '""')}"`,
+        `"${(Array.isArray(r.specialRequests) ? r.specialRequests.join('; ') : r.specialRequests || '').replace(/"/g, '""')}"`
+      ].join(',');
+    });
+
+    const summaryRows = [
+      `"DAILY OPERATIONS & BOOKINGS EXCEL REPORT"`,
+      `"Selected Report Date:","${selectedDate}"`,
+      `"Total Day Bookings:","${targetBookings.length}"`,
+      `"Checked In (In-House):","${checkedInCount}"`,
+      `"Expected Arrivals:","${reservedCount}"`,
+      `"Checked Out:","${checkedOutCount}"`,
+      `"Total Day Revenue:","${totalRevenue}"`,
+      `"Total Amount Paid:","${totalPaid}"`,
+      `"Total Outstanding Balance:","${totalOutstanding}"`,
+      `""`
+    ];
+
+    const totalRow = [
+      `"TOTALS"`,
+      `""`,
+      `""`,
+      `""`,
+      `""`,
+      `""`,
+      `""`,
+      `""`,
+      `""`,
+      `""`,
+      `""`,
+      `""`,
+      totalRevenue,
+      totalPaid,
+      totalOutstanding,
+      `""`,
+      `""`
+    ].join(',');
+
+    const csvContent = '\uFEFF' + [
+      ...summaryRows,
+      headers.join(','),
+      ...rows,
+      totalRow
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Operations_Daily_Report_${selectedDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const matchesStatusPill = (res: (typeof reservations)[0]) => {
     if (statusPillFilter === 'ALL') return true;
     if (statusPillFilter === 'ARRIVALS') return res.status === 'RESERVED';
@@ -268,10 +382,12 @@ export const OperationsPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 text-xs font-bold rounded-xl border-[var(--border)] gap-1.5 px-3"
-              onClick={() => window.print()}
+              className="h-8 text-xs font-bold rounded-xl border-[var(--border)] gap-1.5 px-3 cursor-pointer shadow-xs hover:border-emerald-500/50"
+              onClick={handleExportExcel}
+              title="Download Excel spreadsheet report for this day"
             >
-              <Download className="w-3.5 h-3.5" /> Export
+              <Download className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Export Excel</span>
             </Button>
             <div className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--muted)]/60 p-0.5 font-semibold">
               <button onClick={() => setQuickDate('today')} className="px-3 py-1 rounded-lg bg-[var(--card)] text-[var(--foreground)] font-bold shadow-xs">Today</button>

@@ -16,7 +16,11 @@ import {
   ChevronRight,
   Phone,
   ExternalLink,
-  PartyPopper
+  PartyPopper,
+  Share2,
+  Copy,
+  Check,
+  Globe
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -80,6 +84,8 @@ export const DashboardPage: React.FC = () => {
   const { openNewReservation, openFolio } = useModal();
   const [chartType, setChartType] = useState<'combo' | 'bar' | 'area'>('combo');
   const [isTaggedDialogOpen, setIsTaggedDialogOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   
   // Live Public Holiday API State
   const [liveEvents, setLiveEvents] = useState<HotelEvent[]>([]);
@@ -213,8 +219,17 @@ export const DashboardPage: React.FC = () => {
           <DatePicker value={selectedDate} onChange={setSelectedDate} />
           <Button
             size="sm"
+            variant="outline"
+            onClick={() => setIsShareModalOpen(true)}
+            className="border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[var(--foreground)] font-semibold gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Share2 className="w-4 h-4 text-[var(--primary)]" />
+            <span>Share Booking Link</span>
+          </Button>
+          <Button
+            size="sm"
             onClick={() => openNewReservation()}
-            className="bg-[var(--primary)] text-white shadow-sm font-semibold gap-1.5"
+            className="bg-[var(--primary)] text-white shadow-sm font-semibold gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Quick Walk-In
           </Button>
@@ -721,6 +736,79 @@ export const DashboardPage: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* SHARE DIRECT BOOKING LINK MODAL */}
+      <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
+        <DialogContent className="max-w-md bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] rounded-2xl p-6">
+          <DialogHeader className="text-left space-y-1 pb-3 border-b border-[var(--border)]">
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Globe className="w-5 h-5 text-[var(--primary)]" />
+              <span>Share Direct Guest Booking Link</span>
+            </DialogTitle>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Send this public URL to guests via WhatsApp, SMS, or Email so they can reserve rooms directly.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div>
+              <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1.5">
+                Public Booking Link URL
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/book/101`}
+                  className="flex-1 h-10 px-3 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-mono font-semibold text-[var(--foreground)] outline-none"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/book/101`);
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  }}
+                  className="h-10 px-3 bg-[var(--primary)] text-white font-bold text-xs gap-1.5 shrink-0 rounded-xl cursor-pointer"
+                >
+                  {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  <span>{linkCopied ? 'Copied' : 'Copy'}</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-2 text-xs">
+              <div className="flex items-center gap-2 text-[var(--foreground)] font-semibold">
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Instant Auto-Registration</span>
+              </div>
+              <p className="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
+                Guests provide check-in dates, contact info, and room category preferences. Bookings auto-assign available rooms and instantly sync with your Front Desk engine.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-xs font-semibold rounded-xl"
+              >
+                Close
+              </Button>
+
+              <Button
+                size="sm"
+                onClick={() => window.open('/book/101', '_blank')}
+                className="text-xs font-semibold bg-[var(--primary)] text-white gap-1.5 rounded-xl cursor-pointer"
+              >
+                <span>Open Public Page</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
