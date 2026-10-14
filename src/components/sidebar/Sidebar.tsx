@@ -1,15 +1,15 @@
-import React from 'react';
+﻿import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   CalendarDays,
   BedDouble,
   Users,
-  Settings,
-  MoreHorizontal
+  Settings
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useHotel } from '../../context/HotelContext';
+import { useUser } from '../../hooks/useUser';
 
 interface NavItemProps {
   to: string;
@@ -47,6 +47,11 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   const { cashRegister } = useHotel();
+  const { user } = useUser();
+
+  const displayName = user?.name || cashRegister.activeReceptionist;
+  const displayEmail = user?.email || 'sarah.jenkins@grandazure.com';
+  const displayRole = user?.role || 'STAFF';
 
   return (
     <aside
@@ -69,7 +74,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             </div>
           )}
         </div>
-
 
         {/* MAIN NAV */}
         <div className="px-3 py-2 space-y-0.5">
@@ -95,13 +99,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         </div>
       </div>
 
-      {/* BOTTOM: User */}
+      {/* BOTTOM: User Profile */}
       <div className="shrink-0">
-
-        {/* User Profile */}
         <div className={cn('p-3 border-t border-[var(--sidebar-border)]')}>
           <div
-            title={isCollapsed ? cashRegister.activeReceptionist : undefined}
+            title={isCollapsed ? `${displayName} (${displayRole})` : undefined}
             className={cn(
               'flex items-center rounded-lg hover:bg-[var(--sidebar-accent)] cursor-pointer transition-all p-2 group',
               isCollapsed ? 'justify-center' : 'gap-2.5'
@@ -109,21 +111,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           >
             {/* Avatar */}
             <img
-              src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(cashRegister.activeReceptionist)}`}
-              alt="Receptionist Avatar"
+              src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(displayName)}`}
+              alt="User Avatar"
               className="w-9 h-9 rounded-full bg-indigo-50 border border-indigo-200 shrink-0"
             />
             {!isCollapsed && (
               <>
                 <div className="leading-tight text-left min-w-0 flex-1">
                   <p className="text-xs font-semibold text-[var(--sidebar-foreground)] truncate">
-                    {cashRegister.activeReceptionist}
+                    {displayName}
                   </p>
                   <p className="text-[10px] text-[var(--muted-foreground)] truncate">
-                    sarah.jenkins@grandazure.com
+                    {displayEmail}
                   </p>
                 </div>
-                <MoreHorizontal className="w-4 h-4 text-[var(--muted-foreground)] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] shrink-0">
+                  {displayRole}
+                </span>
               </>
             )}
           </div>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+﻿import React, { useState, useEffect } from 'react';
+import { Outlet, Navigate } from 'react-router-dom';
 import { TopBar } from '../components/topbar/TopBar';
 import { Sidebar } from '../components/sidebar/Sidebar';
 import { NewReservationModal } from '../components/modals/NewReservationModal';
@@ -7,10 +7,10 @@ import { FolioModal } from '../components/modals/FolioModal';
 import { FastSearchModal } from '../components/modals/FastSearchModal';
 import { ShiftCloseModal } from '../components/modals/ShiftCloseModal';
 import { cn } from '../lib/utils';
+import { useUser } from '../hooks/useUser';
 
 export const AppShell: React.FC = () => {
-  // On mobile: sidebar is hidden by default (mobileOpen = false)
-  // On desktop: sidebar is visible, isCollapsed controls expand/collapse
+  const { user, loading, loggedOut } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -36,9 +36,23 @@ export const AppShell: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs text-[var(--muted-foreground)] font-medium">Verifying front desk session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loggedOut || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className="h-screen w-screen flex bg-[var(--sidebar)] overflow-hidden">
-
       {/* MOBILE BACKDROP OVERLAY */}
       {isMobile && mobileOpen && (
         <div

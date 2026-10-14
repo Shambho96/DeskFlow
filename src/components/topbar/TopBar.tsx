@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { PanelLeft, Search, Sun, Moon, Clock, Calendar } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { PanelLeft, Search, Sun, Moon, Clock, Calendar, LogOut, Building2 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useModal } from '../../context/ModalContext';
+import { useUser } from '../../hooks/useUser';
 
 interface TopBarProps {
   isCollapsed: boolean;
@@ -20,6 +21,8 @@ const PAGE_TITLES: Record<string, string> = {
 export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) => {
   const { theme, toggleTheme } = useTheme();
   const { openSearch } = useModal();
+  const { user, logout, switchOutlet } = useUser();
+  const navigate = useNavigate();
   const location = useLocation();
 
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'DeskFlow';
@@ -55,9 +58,19 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [openSearch]);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+      navigate('/login');
+    }
+  };
+
   return (
     <header className="h-14 sm:h-16 border-b border-[var(--border)] bg-[var(--background)] px-3 sm:px-4 flex items-center justify-between sticky top-0 z-30 select-none">
-      {/* LEFT: toggle + page title + clock */}
+      {/* LEFT: toggle + page title + clock + outlet switcher */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={toggleSidebar}
@@ -83,9 +96,28 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
             {formattedTime}
           </span>
         </div>
+
+        {/* Multi-outlet Switcher Dropdown */}
+        {user?.allowed_outlets && user.allowed_outlets.length > 1 && (
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--muted)] border border-[var(--border)] text-xs">
+            <Building2 className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
+            <select
+              value={user.active_outlet_id}
+              onChange={(e) => switchOutlet(e.target.value)}
+              className="bg-transparent text-[var(--foreground)] font-medium cursor-pointer focus:outline-none text-xs"
+              title="Switch Active Outlet Branch"
+            >
+              {user.allowed_outlets.map((outletId) => (
+                <option key={outletId} value={outletId} className="bg-[var(--card)] text-[var(--foreground)]">
+                  Outlet #{outletId}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      {/* RIGHT: Search + Theme toggle */}
+      {/* RIGHT: Search + Theme toggle + Logout */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Search bar — icon-only on mobile */}
         <button
@@ -110,6 +142,15 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
           ) : (
             <Moon className="w-4 h-4" />
           )}
+        </button>
+
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          className="h-8 sm:h-9 w-8 sm:w-9 flex items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors border border-[var(--border)]"
+          title="Sign out of shift"
+        >
+          <LogOut className="w-4 h-4" />
         </button>
       </div>
     </header>

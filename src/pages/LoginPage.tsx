@@ -1,22 +1,31 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bed, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Bed, Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { useUser } from '../hooks/useUser';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('sarah.jenkins@deskflow.app');
-  const [password, setPassword] = useState('••••••••••••');
+  const { login } = useUser();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await login(email, password);
       navigate('/app/dashboard');
-    }, 600);
+    } catch (err: any) {
+      setError(err?.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,6 +52,13 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-8 shadow-2xl">
+          {error && (
+            <div className="mb-5 flex items-start gap-2.5 p-3.5 text-xs text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1.5">
@@ -55,6 +71,7 @@ export const LoginPage: React.FC = () => {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className="pl-9"
+                  placeholder="Enter email address"
                   required
                 />
               </div>
@@ -67,12 +84,26 @@ export const LoginPage: React.FC = () => {
               <div className="relative">
                 <Lock className="w-4 h-4 text-[var(--muted-foreground)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 pr-10"
+                  placeholder="Enter password"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer focus:outline-none transition-colors"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -97,7 +128,7 @@ export const LoginPage: React.FC = () => {
           <div className="mt-6 pt-6 border-t border-[var(--border)] text-center">
             <div className="inline-flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Shift Register: Sarah Jenkins (Drawer #SH-24)</span>
+              <span>Shift Register: Secure Hotel Desk Engine</span>
             </div>
           </div>
         </div>
