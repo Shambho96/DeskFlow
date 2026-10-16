@@ -1,4 +1,5 @@
-﻿import useSWR from 'swr';
+
+import useSWR from 'swr';
 import { customFetch, fetcher } from '../lib/api';
 
 export interface UserContext {
@@ -39,12 +40,15 @@ export function useUser() {
    * 1. Login with email and password (POST /api/v1/auth/login)
    */
   async function login(email: string, password: string, selected_outlet_id?: string | number) {
+    const numericId = selected_outlet_id !== undefined ? Number(selected_outlet_id) : undefined;
+    const outletId = numericId !== undefined && !Number.isNaN(numericId) ? numericId : selected_outlet_id;
+
     const res = await customFetch<AuthResponse>('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify({
         email,
         password,
-        ...(selected_outlet_id !== undefined ? { selected_outlet_id } : {}),
+        ...(outletId !== undefined ? { selected_outlet_id: outletId } : {}),
       }),
     });
 
@@ -69,9 +73,12 @@ export function useUser() {
    * 3. Switch active hotel outlet (POST /api/v1/auth/switch-outlet)
    */
   async function switchOutlet(target_outlet_id: string | number) {
+    const numericId = Number(target_outlet_id);
+    const targetId = !Number.isNaN(numericId) ? numericId : target_outlet_id;
+
     const res = await customFetch<AuthResponse>('/api/v1/auth/switch-outlet', {
       method: 'POST',
-      body: JSON.stringify({ target_outlet_id }),
+      body: JSON.stringify({ target_outlet_id: targetId }),
     });
 
     // Update active user context with new active_outlet_id

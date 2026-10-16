@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PanelLeft, Search, Sun, Moon, Clock, Calendar, LogOut, Building2 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,6 +16,11 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/rooms':      'Rooms & Floors',
   '/app/guests':     'Guests',
   '/app/settings':   'Settings',
+};
+
+const OUTLET_LABELS: Record<string | number, string> = {
+  1: 'Taj - Mumbai',
+  2: 'Taj - Kolhapur',
 };
 
 export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) => {
@@ -103,13 +108,13 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
             <Building2 className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
             <select
               value={user.active_outlet_id}
-              onChange={(e) => switchOutlet(e.target.value)}
+              onChange={(e) => switchOutlet(Number(e.target.value))}
               className="bg-transparent text-[var(--foreground)] font-medium cursor-pointer focus:outline-none text-xs"
               title="Switch Active Outlet Branch"
             >
               {user.allowed_outlets.map((outletId) => (
                 <option key={outletId} value={outletId} className="bg-[var(--card)] text-[var(--foreground)]">
-                  Outlet #{outletId}
+                  {OUTLET_LABELS[outletId] || `Outlet #${outletId}`}
                 </option>
               ))}
             </select>
