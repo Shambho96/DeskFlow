@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { PanelLeft, Search, Sun, Moon, Clock, Calendar, LogOut } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { PanelLeft, Search, Sun, Moon, Clock, Calendar } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useModal } from '../../context/ModalContext';
-import { useUser } from '../../hooks/useUser';
 
 interface TopBarProps {
   isCollapsed: boolean;
@@ -23,8 +22,6 @@ const PAGE_TITLES: Record<string, string> = {
 export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) => {
   const { theme, toggleTheme } = useTheme();
   const { openSearch } = useModal();
-  const { logout } = useUser();
-  const navigate = useNavigate();
   const location = useLocation();
 
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'DeskFlow';
@@ -60,16 +57,6 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [openSearch]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (err) {
-      console.error('Logout error:', err);
-      navigate('/login');
-    }
-  };
-
   return (
     <header className="h-14 sm:h-16 border-b border-[var(--border)] bg-[var(--background)] px-3 sm:px-4 flex items-center justify-between sticky top-0 z-30 select-none">
       {/* LEFT: toggle + page title + clock + outlet switcher */}
@@ -102,7 +89,7 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
 
       </div>
 
-      {/* RIGHT: Search + Theme toggle + Logout */}
+      {/* RIGHT: Search + Theme toggle */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Search bar — icon-only on mobile */}
         <button
@@ -127,15 +114,6 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
           ) : (
             <Moon className="w-4 h-4" />
           )}
-        </button>
-
-        {/* Logout button */}
-        <button
-          onClick={handleLogout}
-          className="h-8 sm:h-9 w-8 sm:w-9 flex items-center justify-center rounded-lg text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors border border-[var(--border)]"
-          title="Sign out of shift"
-        >
-          <LogOut className="w-4 h-4" />
         </button>
       </div>
     </header>

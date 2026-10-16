@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import * as Popover from '@radix-ui/react-popover';
 import {
   LayoutDashboard,
@@ -10,6 +10,7 @@ import {
   ChevronsUpDown,
   Search,
   Check,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useHotel } from '../../context/HotelContext';
@@ -270,11 +271,22 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   const { cashRegister } = useHotel();
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
 
   const displayName  = user?.name  || cashRegister.activeReceptionist;
   const displayEmail = user?.email || 'sarah.jenkins@grandazure.com';
   const displayRole  = user?.role  || 'STAFF';
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+      navigate('/login');
+    }
+  };
 
   return (
     <aside
@@ -329,32 +341,53 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         </div>
       </div>
 
-      {/* ── Bottom: User Profile ────────────────────────────────────────────── */}
+      {/* ── Bottom: User Profile & Logout Button ─────────────────────────────── */}
       <div className="shrink-0 p-3 border-t border-[var(--sidebar-border)]">
-        <div
-          title={isCollapsed ? `${displayName} (${displayRole})` : undefined}
-          className={cn(
-            'flex items-center rounded-lg hover:bg-[var(--sidebar-accent)] cursor-pointer transition-all p-2',
-            isCollapsed ? 'justify-center' : 'gap-2.5'
-          )}
-        >
-          <img
-            src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(displayName)}`}
-            alt="Avatar"
-            className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 shrink-0"
-          />
-          {!isCollapsed && (
-            <>
-              <div className="leading-tight text-left min-w-0 flex-1">
-                <p className="text-xs font-semibold text-[var(--sidebar-foreground)] truncate">{displayName}</p>
-                <p className="text-[10px] text-[var(--muted-foreground)] truncate">{displayEmail}</p>
+        {isCollapsed ? (
+          <div className="flex flex-col items-center gap-2">
+            <img
+              src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(displayName)}`}
+              alt="Avatar"
+              title={`${displayName} (${displayRole})`}
+              className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 shrink-0"
+            />
+            <button
+              onClick={handleLogout}
+              title="Sign out of shift"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[var(--sidebar-accent)] transition-all">
+            <img
+              src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(displayName)}`}
+              alt="Avatar"
+              className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 shrink-0"
+            />
+            <div className="leading-tight text-left min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-semibold text-[var(--sidebar-foreground)] truncate">
+                  {displayName}
+                </p>
+                <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] shrink-0">
+                  {displayRole}
+                </span>
               </div>
-              <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] shrink-0">
-                {displayRole}
-              </span>
-            </>
-          )}
-        </div>
+              <p className="text-[10px] text-[var(--muted-foreground)] truncate mt-0.5">
+                {displayEmail}
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Sign out of shift"
+              className="p-1.5 rounded-lg text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );
