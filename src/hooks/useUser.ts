@@ -28,9 +28,10 @@ export function useUser() {
     isValidating,
   } = useSWR<UserContext>('/api/v1/auth/me', fetcher, {
     shouldRetryOnError: false,
-    revalidateOnFocus: true,
-    revalidateIfStale: true,
-    dedupingInterval: 5000,
+    revalidateOnFocus: false,
+    revalidateIfStale: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 60_000,
   });
 
   const loggedOut = Boolean(error);

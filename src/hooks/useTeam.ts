@@ -119,8 +119,12 @@ export function useTeam() {
     setPage(1);
   };
 
+  const userId = user?.id;
+  const userRole = user?.role;
+  const activeOutletId = user?.active_outlet_id;
+
   const fetchMembers = useCallback(async () => {
-    if (!user || user.role === 'STAFF') {
+    if (!userId || userRole === 'STAFF') {
       setIsLoading(false);
       return;
     }
@@ -130,7 +134,7 @@ export function useTeam() {
       setError(null);
 
       const variables: Record<string, any> = {
-        allOutlets: user.role === 'OWNER' ? allOutlets : false,
+        allOutlets: userRole === 'OWNER' ? allOutlets : false,
         page,
         pageSize,
       };
@@ -166,12 +170,12 @@ export function useTeam() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, search, roleFilter, statusFilter, allOutlets, page, pageSize]);
+  }, [userId, userRole, search, roleFilter, statusFilter, allOutlets, page, pageSize]);
 
   // Refetch on filter, page, or outlet switch
   useEffect(() => {
     fetchMembers();
-  }, [fetchMembers, user?.active_outlet_id]);
+  }, [fetchMembers, activeOutletId]);
 
   // Create member
   const addMember = async (input: CreateMemberInput): Promise<TeamMember> => {

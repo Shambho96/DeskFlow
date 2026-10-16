@@ -1,9 +1,42 @@
-﻿const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
+let refreshPromise: Promise<boolean> | null = null;
+
+/**
+ * Attempts to silently refresh the access token using the HttpOnly refresh_token cookie.
+ * Ensures only one refresh request is active at any given time.
+ */
+async function tryRefreshToken(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const url = `${BASE_URL}/api/v1/auth/refresh`;
+      const res = await fetch(url, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
 
 /**
  * Custom Fetch wrapper with credentials: 'include' for HttpOnly JWT cookie support.
+ * Automatically catches 401 Unauthorized responses and attempts a silent session refresh.
  */
-export async function customFetch<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function customFetch<T = any>(
+  endpoint: string,
+  options: RequestInit = {},
+  isRetry: boolean = false
+): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> || {}),
@@ -16,6 +49,20 @@ export async function customFetch<T = any>(endpoint: string, options: RequestIni
     credentials: 'include', // Automatically sends and receives HttpOnly cookies
     headers,
   });
+
+  // Catch expired access token and attempt silent refresh
+  if (
+    response.status === 401 &&
+    !isRetry &&
+    !endpoint.includes('/auth/login') &&
+    !endpoint.includes('/auth/refresh')
+  ) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      // Replay the original request with the fresh access_token cookie
+      return customFetch<T>(endpoint, options, true);
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
