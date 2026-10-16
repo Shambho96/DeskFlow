@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PanelLeft, Search, Sun, Moon, Clock, Calendar, LogOut, Building2 } from 'lucide-react';
+import { PanelLeft, Search, Sun, Moon, Clock, Calendar, LogOut } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useModal } from '../../context/ModalContext';
 import { useUser } from '../../hooks/useUser';
@@ -18,15 +18,12 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/settings':   'Settings',
 };
 
-const OUTLET_LABELS: Record<string | number, string> = {
-  1: 'Taj - Mumbai',
-  2: 'Taj - Kolhapur',
-};
+
 
 export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) => {
   const { theme, toggleTheme } = useTheme();
   const { openSearch } = useModal();
-  const { user, logout, switchOutlet } = useUser();
+  const { logout } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -102,24 +99,7 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
           </span>
         </div>
 
-        {/* Multi-outlet Switcher Dropdown */}
-        {user?.allowed_outlets && user.allowed_outlets.length > 1 && (
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--muted)] border border-[var(--border)] text-xs">
-            <Building2 className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
-            <select
-              value={user.active_outlet_id}
-              onChange={(e) => switchOutlet(Number(e.target.value))}
-              className="bg-transparent text-[var(--foreground)] font-medium cursor-pointer focus:outline-none text-xs"
-              title="Switch Active Outlet Branch"
-            >
-              {user.allowed_outlets.map((outletId) => (
-                <option key={outletId} value={outletId} className="bg-[var(--card)] text-[var(--foreground)]">
-                  {OUTLET_LABELS[outletId] || `Outlet #${outletId}`}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+
       </div>
 
       {/* RIGHT: Search + Theme toggle + Logout */}
