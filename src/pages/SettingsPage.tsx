@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
+import { TeamManagementTab } from '../components/settings/TeamManagementTab';
 
 export const SettingsPage: React.FC = () => {
   const [hotelName, setHotelName] = useState('DeskFlow — Grand Azure Hotel & Suites');
@@ -21,12 +22,15 @@ export const SettingsPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Hotel Settings & Configuration</h1>
-          <p className="text-xs text-[var(--muted-foreground)]">Branding and role permissions matrix</p>
+          <p className="text-xs text-[var(--muted-foreground)]">Branding, team member directory, and role permissions</p>
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="w-full">
+      <Tabs defaultValue="team" className="w-full">
         <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-auto gap-0 overflow-x-auto no-scrollbar">
+          <TabsTrigger value="team" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
+            Team & Staff
+          </TabsTrigger>
           <TabsTrigger value="profile" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
             Profile & Branding
           </TabsTrigger>
@@ -34,6 +38,11 @@ export const SettingsPage: React.FC = () => {
             Role Permissions
           </TabsTrigger>
         </TabsList>
+
+        {/* SUB-TAB: TEAM & STAFF */}
+        <TabsContent value="team" className="pt-4">
+          <TeamManagementTab />
+        </TabsContent>
 
         {/* SUB-TAB 1: PROFILE & BRANDING */}
         <TabsContent value="profile" className="pt-4">
