@@ -1,0 +1,70 @@
+#!/bin/sh
+# DeskFlow Frontend Pre-Commit Hook (Husky)
+# Automatically executes on `git commit` to validate syntax, types, and quality on staged files.
+
+set +e
+
+echo ""
+echo "=============================================================="
+echo "  🔍 [DeskFlow Frontend] Running Pre-Commit Quality Checks... "
+echo "=============================================================="
+echo ""
+
+# 1. Gather all staged code files (TypeScript / TSX / JavaScript)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx)$' || true)
+
+if [ -z "$STAGED_FILES" ]; then
+  echo "ℹ️  No TypeScript/JavaScript files staged. Skipping code checks."
+  echo "✅ Ready to commit."
+  echo ""
+  exit 0
+fi
+
+echo "Staged code files to verify:"
+for file in $STAGED_FILES; do
+  echo "  • $file"
+done
+echo ""
+
+# 2. Run TypeScript Static Type Check
+echo "▶ Running TypeScript type check (tsc -b)..."
+npx tsc -b
+TSC_STATUS=$?
+
+if [ $TSC_STATUS -ne 0 ]; then
+  echo ""
+  echo "=============================================================="
+  echo "  ❌ [FAILED] TypeScript Type Check Failed!"
+  echo "  Please fix the type errors listed above before committing."
+  echo "=============================================================="
+  echo ""
+  exit 1
+fi
+echo "  ✅ [PASSED] TypeScript Type Check"
+echo ""
+
+# 3. Run Oxlint on Staged Files
+echo "▶ Running Oxlint syntax & quality check on staged files..."
+npx oxlint $STAGED_FILES
+OXLINT_STATUS=$?
+
+if [ $OXLINT_STATUS -ne 0 ]; then
+  echo ""
+  echo "=============================================================="
+  echo "  ❌ [FAILED] Oxlint Syntax / Code Quality Check Failed!"
+  echo "  Please resolve the lint errors above before committing."
+  echo "=============================================================="
+  echo ""
+  exit 1
+fi
+echo "  ✅ [PASSED] Oxlint Syntax & Code Quality Check"
+echo ""
+
+# 4. Success summary
+echo "=============================================================="
+echo "  🎉 All Pre-Commit Checks PASSED successfully!"
+echo "  Proceeding with commit...                                   "
+echo "=============================================================="
+echo ""
+
+exit 0
