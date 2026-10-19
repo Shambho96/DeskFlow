@@ -9,16 +9,18 @@ export interface OutletInfo {
 
 /**
  * Fetches real outlet details (id, name, city) for all outlets the
- * current user has access to.  Only fires when a user session exists.
+ * current user has access to. Caches result across page navigation so it only calls once.
  */
 export function useOutlets(enabled = true) {
-  const { data, error, isLoading } = useSWR<OutletInfo[]>(
+  const { data, error, isLoading, mutate } = useSWR<OutletInfo[]>(
     enabled ? '/api/v1/auth/outlets' : null,
     fetcher,
     {
       shouldRetryOnError: false,
       revalidateOnFocus: false,
-      dedupingInterval: 60_000, // outlets rarely change mid-session
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 300_000, // 5 min dedupe & cache
     }
   );
 
@@ -26,6 +28,7 @@ export function useOutlets(enabled = true) {
     outlets: data ?? [],
     isLoading,
     error,
+    refetch: mutate,
   };
 }
 

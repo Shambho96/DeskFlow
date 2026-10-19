@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { graphqlRequest } from '../lib/graphql';
 import { useUser } from './useUser';
 import type { TeamMember, CreateMemberInput, UpdateMemberInput, TeamMembersPayload } from '../types/team';
@@ -88,17 +89,10 @@ const TOGGLE_TEAM_MEMBER_STATUS_MUTATION = `
 
 export function useTeam() {
   const { user } = useUser();
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Pagination states
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
-  const [total, setTotal] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [hasNext, setHasNext] = useState<boolean>(false);
-  const [hasPrev, setHasPrev] = useState<boolean>(false);
 
   // Filters
   const [search, setSearch] = useState<string>('');
@@ -140,16 +134,26 @@ export function useTeam() {
   const userRole = user?.role;
   const activeOutletId = user?.active_outlet_id;
 
-  const fetchMembers = useCallback(async () => {
-    if (!userId || userRole === 'STAFF') {
-      setIsLoading(false);
-      return;
-    }
+  // Cache key uniquely identifying the query parameters
+  const swrKey = (!userId || userRole === 'STAFF') ? null : JSON.stringify({
+    scope: 'teamMembers',
+    outlet: userRole === 'OWNER' && allOutlets ? 'all' : activeOutletId,
+    page,
+    pageSize,
+    search: search.trim(),
+    role: roleFilter,
+    status: statusFilter,
+  });
 
-    try {
-      setIsLoading(true);
-      setError(null);
-
+  const {
+    data,
+    error: swrError,
+    isLoading: isSwrLoading,
+    isValidating,
+    mutate,
+  } = useSWR<TeamMembersPayload>(
+    swrKey,
+    async () => {
       const variables: Record<string, any> = {
         allOutlets: userRole === 'OWNER' ? allOutlets : false,
         page,
@@ -177,24 +181,28 @@ export function useTeam() {
         variables
       );
 
-      const payload = res.teamMembers;
-      setMembers(payload.users || []);
-      setTotal(payload.total);
-      setTotalPages(payload.totalPages);
-      setHasNext(payload.hasNext);
-      setHasPrev(payload.hasPrev);
-    } catch (err: any) {
-      console.error('Error fetching team members:', err);
-      setError(err.message || 'Failed to fetch team members');
-    } finally {
-      setIsLoading(false);
+      return res.teamMembers;
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 300_000, // 5 min cache: only fetches once per filter set
+      keepPreviousData: true,    // Retain previous page/data during filter changes
+      shouldRetryOnError: false,
     }
-  }, [userId, userRole, search, roleFilter, statusFilter, allOutlets, page, pageSize]);
+  );
 
-  // Refetch on filter, page, or outlet switch
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers, activeOutletId]);
+  // Derived state from cached payload
+  const members: TeamMember[] = data?.users || [];
+  const total = data?.total || 0;
+  const totalPages = data?.totalPages || 1;
+  const hasNext = data?.hasNext || false;
+  const hasPrev = data?.hasPrev || false;
+
+  // Only show loading spinner on initial fetch with no data
+  const isLoading = isSwrLoading && !data;
+  const error = swrError ? (swrError.message || 'Failed to fetch team members') : null;
 
   // Create member
   const addMember = async (input: CreateMemberInput): Promise<TeamMember> => {
@@ -215,10 +223,9 @@ export function useTeam() {
         }
       );
 
-      const newMember = res.createTeamMember;
-      // Refetch directory to get current page updated accurately
-      fetchMembers();
-      return newMember;
+      // Revalidate cache to sync directory
+      await mutate();
+      return res.createTeamMember;
     } catch (err: any) {
       const msg = err.message || 'Failed to create team member';
       setActionError(msg);
@@ -248,9 +255,8 @@ export function useTeam() {
         }
       );
 
-      const updated = res.updateTeamMember;
-      fetchMembers();
-      return updated;
+      await mutate();
+      return res.updateTeamMember;
     } catch (err: any) {
       const msg = err.message || 'Failed to update team member';
       setActionError(msg);
@@ -261,30 +267,31 @@ export function useTeam() {
   };
 
   // Toggle member status
-  const toggleStatus = async (userId: number, currentStatus: boolean): Promise<void> => {
+  const toggleStatus = async (userIdToToggle: number, currentStatus: boolean): Promise<void> => {
     const nextStatus = !currentStatus;
     setActionError(null);
 
-    // Optimistic update
-    setMembers(prev =>
-      prev.map(m => (m.id === userId ? { ...m, isActive: nextStatus } : m))
-    );
+    // Optimistic UI update
+    if (data) {
+      const updatedUsers = data.users.map(u =>
+        u.id === userIdToToggle ? { ...u, isActive: nextStatus } : u
+      );
+      mutate({ ...data, users: updatedUsers }, false);
+    }
 
     try {
       await graphqlRequest<{ toggleTeamMemberStatus: { status: string; message: string } }>(
         TOGGLE_TEAM_MEMBER_STATUS_MUTATION,
         {
-          userId,
+          userId: userIdToToggle,
           isActive: nextStatus,
         }
       );
-      // Re-fetch to keep counts and server-side state in sync
-      fetchMembers();
+      // Background revalidate to ensure accurate server totals
+      await mutate();
     } catch (err: any) {
-      // Revert on failure
-      setMembers(prev =>
-        prev.map(m => (m.id === userId ? { ...m, isActive: currentStatus } : m))
-      );
+      // Revert optimistic update on failure
+      await mutate();
       const msg = err.message || 'Failed to change member status';
       setActionError(msg);
       throw new Error(msg);
@@ -294,6 +301,7 @@ export function useTeam() {
   return {
     members,
     isLoading,
+    isValidating,
     error,
     // Pagination
     page,
@@ -314,7 +322,7 @@ export function useTeam() {
     allOutlets,
     setAllOutlets: handleSetAllOutlets,
     // Actions
-    refetch: fetchMembers,
+    refetch: () => mutate(),
     addMember,
     updateMember,
     toggleStatus,
