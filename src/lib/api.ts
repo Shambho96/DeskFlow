@@ -6,7 +6,7 @@ let refreshPromise: Promise<boolean> | null = null;
  * Attempts to silently refresh the access token using the HttpOnly refresh_token cookie.
  * Ensures only one refresh request is active at any given time.
  */
-async function tryRefreshToken(): Promise<boolean> {
+export async function tryRefreshToken(): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
@@ -68,11 +68,14 @@ export async function customFetch<T = any>(
     const errorData = await response.json().catch(() => ({}));
     const message = errorData.detail || errorData.message || `Request failed with status ${response.status}`;
 
-    // Auto-redirect to /login if session invalidated or account deactivated while in app
+    // Auto-redirect to /login if account was explicitly deactivated OR if refresh failed on a retried request
+    const isDeactivated = response.status === 403 && String(message).toLowerCase().includes('deactivat');
+    const isFailedAuth = response.status === 401 && isRetry;
+
     if (
       !endpoint.includes('/auth/login') &&
       !endpoint.includes('/auth/refresh') &&
-      (response.status === 401 || (response.status === 403 && String(message).toLowerCase().includes('deactivat')))
+      (isDeactivated || isFailedAuth)
     ) {
       if (typeof window !== 'undefined' && window.location.pathname.startsWith('/app')) {
         window.location.href = '/login';
