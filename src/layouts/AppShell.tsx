@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import { TopBar } from '../components/topbar/TopBar';
 import { Sidebar } from '../components/sidebar/Sidebar';
 import { NewReservationModal } from '../components/modals/NewReservationModal';
 import { FolioModal } from '../components/modals/FolioModal';
 import { FastSearchModal } from '../components/modals/FastSearchModal';
 import { ShiftCloseModal } from '../components/modals/ShiftCloseModal';
+import { BedDouble } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useUser } from '../hooks/useUser';
 
 export const AppShell: React.FC = () => {
-  // On mobile: sidebar is hidden by default (mobileOpen = false)
-  // On desktop: sidebar is visible, isCollapsed controls expand/collapse
+  const { user, loading } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -36,9 +37,32 @@ export const AppShell: React.FC = () => {
     }
   };
 
+  // Cold boot loader: ONLY displayed on very first page load before any user data exists
+  if (loading && !user) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[var(--background)] text-[var(--foreground)] select-none">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--primary)] flex items-center justify-center text-[var(--primary-foreground)] shadow-lg shadow-[var(--primary)]/20 animate-pulse">
+            <BedDouble className="w-6 h-6" />
+          </div>
+          <span className="font-extrabold text-base tracking-tight text-[var(--foreground)]">
+            Desk<span className="text-[var(--primary)]">Flow</span>
+          </span>
+          <div className="w-24 h-1 bg-[var(--muted)] rounded-full overflow-hidden mt-1">
+            <div className="w-1/2 h-full bg-[var(--primary)] rounded-full animate-[spin_1.5s_linear_infinite]" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If no active user session, redirect to login cleanly
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className="h-screen w-screen flex bg-[var(--sidebar)] overflow-hidden">
-
       {/* MOBILE BACKDROP OVERLAY */}
       {isMobile && mobileOpen && (
         <div

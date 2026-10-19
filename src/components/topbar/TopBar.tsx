@@ -17,6 +17,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/settings':   'Settings',
 };
 
+
+
 export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) => {
   const { theme, toggleTheme } = useTheme();
   const { openSearch } = useModal();
@@ -57,7 +59,7 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
 
   return (
     <header className="h-14 sm:h-16 border-b border-[var(--border)] bg-[var(--background)] px-3 sm:px-4 flex items-center justify-between sticky top-0 z-30 select-none">
-      {/* LEFT: toggle + page title + clock */}
+      {/* LEFT: toggle + page title + clock + outlet switcher */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={toggleSidebar}
@@ -83,6 +85,8 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
             {formattedTime}
           </span>
         </div>
+
+
       </div>
 
       {/* RIGHT: Search + Theme toggle */}
