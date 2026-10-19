@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Building,
   RefreshCw,
+  Pencil,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -20,6 +21,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { AddTeamMemberModal } from './AddTeamMemberModal';
+import { EditTeamMemberModal } from './EditTeamMemberModal';
 import { useTeam } from '../../hooks/useTeam';
 import { useUser } from '../../hooks/useUser';
 import { useOutlets } from '../../hooks/useOutlets';
@@ -57,11 +59,14 @@ export const TeamManagementTab: React.FC = () => {
     setAllOutlets,
     refetch,
     addMember,
+    updateMember,
     toggleStatus,
     actionError,
   } = useTeam();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
   const isOwner = user?.role === 'OWNER';
@@ -178,16 +183,22 @@ export const TeamManagementTab: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Role Filter */}
-          <select
-            value={roleFilter}
-            onChange={e => setRoleFilter(e.target.value)}
-            className="h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 text-xs text-[var(--foreground)] font-medium outline-none cursor-pointer"
-          >
-            <option value="ALL">All Roles</option>
-            <option value="MANAGER">Managers</option>
-            <option value="STAFF">Staff</option>
-          </select>
+          {/* Role Filter - Owners can filter all roles, Managers are scoped to Staff */}
+          {isOwner ? (
+            <select
+              value={roleFilter}
+              onChange={e => setRoleFilter(e.target.value)}
+              className="h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 text-xs text-[var(--foreground)] font-medium outline-none cursor-pointer"
+            >
+              <option value="ALL">All Roles</option>
+              <option value="MANAGER">Managers</option>
+              <option value="STAFF">Staff</option>
+            </select>
+          ) : (
+            <div className="h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 text-xs text-[var(--muted-foreground)] font-medium flex items-center">
+              Staff Only
+            </div>
+          )}
 
           {/* Status Filter */}
           <select
@@ -195,9 +206,9 @@ export const TeamManagementTab: React.FC = () => {
             onChange={e => setStatusFilter(e.target.value)}
             className="h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 text-xs text-[var(--foreground)] font-medium outline-none cursor-pointer"
           >
-            <option value="ALL">All Status</option>
+            <option value="ALL">All Status (Active & Deactivated)</option>
             <option value="ACTIVE">Active Only</option>
-            <option value="INACTIVE">Inactive Only</option>
+            <option value="INACTIVE">Deactivated Only</option>
           </select>
 
           {/* Owner: cross-outlet toggle */}
@@ -338,14 +349,14 @@ export const TeamManagementTab: React.FC = () => {
                         {/* Status */}
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           {member.isActive ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                               Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium text-[10px] bg-zinc-500/10 text-zinc-500">
-                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                              Inactive
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-[10px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                              Deactivated
                             </span>
                           )}
                         </td>
@@ -357,25 +368,41 @@ export const TeamManagementTab: React.FC = () => {
                               Owner account
                             </span>
                           ) : canModify ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleToggle(member)}
-                              disabled={isToggling}
-                              className={`h-7 px-2.5 text-[11px] cursor-pointer transition-colors ${
-                                member.isActive
-                                  ? 'hover:text-red-600 hover:border-red-300 hover:bg-red-50/50 dark:hover:bg-red-950/20'
-                                  : 'hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20'
-                              }`}
-                            >
-                              {isToggling ? (
-                                <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                              ) : member.isActive ? (
-                                'Deactivate'
-                              ) : (
-                                'Activate'
-                              )}
-                            </Button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedMember(member);
+                                  setIsEditModalOpen(true);
+                                }}
+                                className="h-7 px-2.5 text-[11px] cursor-pointer hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors flex items-center gap-1"
+                                title="Edit team member details"
+                              >
+                                <Pencil className="w-3 h-3" />
+                                <span>Edit</span>
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleToggle(member)}
+                                disabled={isToggling}
+                                className={`h-7 px-2.5 text-[11px] cursor-pointer transition-colors ${
+                                  member.isActive
+                                    ? 'hover:text-red-600 hover:border-red-300 hover:bg-red-50/50 dark:hover:bg-red-950/20'
+                                    : 'hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20'
+                                }`}
+                              >
+                                {isToggling ? (
+                                  <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : member.isActive ? (
+                                  'Deactivate'
+                                ) : (
+                                  'Activate'
+                                )}
+                              </Button>
+                            </div>
                           ) : (
                             <span className="text-[11px] text-[var(--muted-foreground)]">
                               Protected
@@ -515,6 +542,20 @@ export const TeamManagementTab: React.FC = () => {
         onAddMember={addMember}
         currentUserRole={user?.role}
         activeOutletName={activeOutlet?.name}
+      />
+
+      {/* ── Edit Member Modal ───────────────────────────────────────────────── */}
+      <EditTeamMemberModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        member={selectedMember}
+        onUpdateMember={updateMember}
+        currentUserRole={user?.role}
+        activeOutletName={
+          selectedMember?.assignedOutletIds && selectedMember.assignedOutletIds.length > 0
+            ? getOutletName(selectedMember.assignedOutletIds)
+            : activeOutlet?.name
+        }
       />
     </div>
   );

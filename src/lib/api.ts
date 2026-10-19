@@ -67,6 +67,18 @@ export async function customFetch<T = any>(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     const message = errorData.detail || errorData.message || `Request failed with status ${response.status}`;
+
+    // Auto-redirect to /login if session invalidated or account deactivated while in app
+    if (
+      !endpoint.includes('/auth/login') &&
+      !endpoint.includes('/auth/refresh') &&
+      (response.status === 401 || (response.status === 403 && String(message).toLowerCase().includes('deactivat')))
+    ) {
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/app')) {
+        window.location.href = '/login';
+      }
+    }
+
     throw new Error(message);
   }
 

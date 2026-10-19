@@ -22,6 +22,16 @@ export interface CreateMemberInput {
   assignedOutletIds?: number[];
 }
 
+export interface UpdateMemberInput {
+  userId: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: TeamRole;
+  password?: string;
+  assignedOutletIds?: number[];
+}
+
 export interface TeamMembersPayload {
   status: string;
   total: number;

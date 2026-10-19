@@ -23,6 +23,17 @@ export async function graphqlRequest<T = any>(
 
   if (result.errors && result.errors.length > 0) {
     const errorMsg = result.errors.map(e => e.message).join(', ');
+    const lower = errorMsg.toLowerCase();
+    if (
+      lower.includes('deactivat') ||
+      lower.includes('authentication required') ||
+      lower.includes('session expired') ||
+      lower.includes('unauthorized')
+    ) {
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/app')) {
+        window.location.href = '/login';
+      }
+    }
     throw new Error(errorMsg || 'GraphQL operation failed');
   }
 

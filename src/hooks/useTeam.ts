@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { graphqlRequest } from '../lib/graphql';
 import { useUser } from './useUser';
-import type { TeamMember, CreateMemberInput, TeamMembersPayload } from '../types/team';
+import type { TeamMember, CreateMemberInput, UpdateMemberInput, TeamMembersPayload } from '../types/team';
 
 const GET_TEAM_MEMBERS_QUERY = `
   query GetTeamMembers(
@@ -46,6 +46,23 @@ const GET_TEAM_MEMBERS_QUERY = `
 const CREATE_TEAM_MEMBER_MUTATION = `
   mutation CreateTeamMember($input: CreateUserInput!) {
     createTeamMember(input: $input) {
+      id
+      name
+      email
+      phone
+      role
+      clientId
+      canLogin
+      isActive
+      assignedOutletIds
+      createdAt
+    }
+  }
+`;
+
+const UPDATE_TEAM_MEMBER_MUTATION = `
+  mutation UpdateTeamMember($input: UpdateUserInput!) {
+    updateTeamMember(input: $input) {
       id
       name
       email
@@ -151,6 +168,8 @@ export function useTeam() {
         variables.isActive = true;
       } else if (statusFilter === 'INACTIVE') {
         variables.isActive = false;
+      } else {
+        variables.isActive = null;
       }
 
       const res = await graphqlRequest<{ teamMembers: TeamMembersPayload }>(
@@ -209,6 +228,38 @@ export function useTeam() {
     }
   };
 
+  // Update member
+  const updateMember = async (input: UpdateMemberInput): Promise<TeamMember> => {
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      const res = await graphqlRequest<{ updateTeamMember: TeamMember }>(
+        UPDATE_TEAM_MEMBER_MUTATION,
+        {
+          input: {
+            userId: input.userId,
+            name: input.name,
+            email: input.email || null,
+            phone: input.phone || null,
+            role: input.role || null,
+            password: input.password || null,
+            assignedOutletIds: input.assignedOutletIds || null,
+          },
+        }
+      );
+
+      const updated = res.updateTeamMember;
+      fetchMembers();
+      return updated;
+    } catch (err: any) {
+      const msg = err.message || 'Failed to update team member';
+      setActionError(msg);
+      throw new Error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Toggle member status
   const toggleStatus = async (userId: number, currentStatus: boolean): Promise<void> => {
     const nextStatus = !currentStatus;
@@ -227,6 +278,8 @@ export function useTeam() {
           isActive: nextStatus,
         }
       );
+      // Re-fetch to keep counts and server-side state in sync
+      fetchMembers();
     } catch (err: any) {
       // Revert on failure
       setMembers(prev =>
@@ -263,6 +316,7 @@ export function useTeam() {
     // Actions
     refetch: fetchMembers,
     addMember,
+    updateMember,
     toggleStatus,
     isSubmitting,
     actionError,
