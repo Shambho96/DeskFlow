@@ -27,10 +27,10 @@ export async function graphqlRequest<T = any>(
     const errorMsg = result.errors.map(e => e.message).join(', ');
     const lower = errorMsg.toLowerCase();
 
-    // 1. If account was explicitly deactivated, immediately redirect to /login
+    // 1. If account was explicitly deactivated, notify app cleanly
     if (lower.includes('deactivat')) {
-      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/app')) {
-        window.location.href = '/login';
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:session-expired', { detail: { message: errorMsg } }));
       }
       throw new Error(errorMsg);
     }
@@ -44,9 +44,9 @@ export async function graphqlRequest<T = any>(
       if (refreshed) {
         return graphqlRequest<T>(query, variables, true);
       } else {
-        // Refresh token itself failed or is expired: redirect to login
-        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/app')) {
-          window.location.href = '/login';
+        // Refresh token failed or is expired: notify app cleanly
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:session-expired', { detail: { message: errorMsg } }));
         }
       }
     }

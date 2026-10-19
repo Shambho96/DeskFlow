@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { TopBar } from '../components/topbar/TopBar';
 import { Sidebar } from '../components/sidebar/Sidebar';
@@ -10,7 +10,7 @@ import { cn } from '../lib/utils';
 import { useUser } from '../hooks/useUser';
 
 export const AppShell: React.FC = () => {
-  const { user, loading, loggedOut } = useUser();
+  const { user, loading } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -36,7 +36,8 @@ export const AppShell: React.FC = () => {
     }
   };
 
-  if (loading) {
+  // Cold boot loader: ONLY displayed on very first page load before any user data exists
+  if (loading && !user) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[var(--background)] text-[var(--foreground)]">
         <div className="flex flex-col items-center gap-3">
@@ -47,7 +48,8 @@ export const AppShell: React.FC = () => {
     );
   }
 
-  if (loggedOut || !user) {
+  // If no active user session, redirect to login cleanly
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

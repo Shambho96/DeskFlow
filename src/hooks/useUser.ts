@@ -1,4 +1,4 @@
-
+import { useEffect } from 'react';
 import useSWR from 'swr';
 import { customFetch, fetcher } from '../lib/api';
 
@@ -31,11 +31,27 @@ export function useUser() {
     revalidateOnFocus: false,
     revalidateIfStale: false,
     revalidateOnReconnect: false,
-    dedupingInterval: 60_000,
+    dedupingInterval: 300_000, // 5 min dedupe interval
+    keepPreviousData: true,    // Retain user state during silent background revalidations
   });
 
-  const loggedOut = Boolean(error);
-  const loading = isLoading;
+  // Listen for global auth session expiry events
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      mutate(null as any, false);
+    };
+
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('auth:session-expired', handleSessionExpired);
+    };
+  }, [mutate]);
+
+  // loggedOut is only true when there is NO user in memory and an error occurred
+  const loggedOut = Boolean(error) && !user;
+
+  // loading is only true on initial cold boot when there is no user cached yet
+  const loading = isLoading && !user;
 
   /**
    * 1. Login with email and password (POST /api/v1/auth/login)
