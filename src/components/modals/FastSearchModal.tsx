@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Phone, ArrowRight, X } from 'lucide-react';
-import { useModal } from '../../context/ModalContext';
+import { ArrowRight, Phone, Search, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
-import { Dialog, DialogContent } from '../ui/Dialog';
-import { Badge } from '../ui/Badge';
+import { useModal } from '../../context/ModalContext';
 import { cn } from '../../lib/utils';
+import { Badge } from '../ui/Badge';
+import { Dialog, DialogContent } from '../ui/Dialog';
+import { PhoneNumberDisplay } from '../ui/PhoneNumberDisplay';
 
 export const FastSearchModal: React.FC = () => {
   const { isSearchOpen, closeSearch, openFolio } = useModal();
@@ -65,7 +66,7 @@ export const FastSearchModal: React.FC = () => {
     <Dialog open={isSearchOpen} onOpenChange={(open) => !open && closeSearch()}>
       {/* Positioned at true screen center (top-[50%] translate-y-[-50%]) */}
       <DialogContent className="max-w-xl w-[92vw] sm:w-full bg-[var(--card)] text-[var(--card-foreground)] border-[var(--border)] p-0 overflow-hidden shadow-2xl rounded-2xl top-[50%] translate-y-[-50%] my-0">
-        
+
         {/* SEARCH INPUT BAR */}
         <div className="p-4 border-b border-[var(--border)] bg-[var(--background)] space-y-3">
           <div className="flex items-center gap-3">
@@ -166,7 +167,7 @@ export const FastSearchModal: React.FC = () => {
                       <p className="text-[11px] text-[var(--muted-foreground)] flex items-center gap-2 mt-0.5">
                         <span className="flex items-center gap-1">
                           <Phone className="w-3 h-3 text-[var(--primary)]" />
-                          {res.phone}
+                          <PhoneNumberDisplay value={res.phone} />
                         </span>
                         <span>•</span>
                         <span>{res.roomType}</span>

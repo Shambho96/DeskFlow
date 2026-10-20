@@ -1,55 +1,56 @@
-import React, { useState, useEffect } from 'react';
 import {
+  AlertTriangle,
+  BarChart3,
+  Building,
   CalendarCheck,
   CalendarX,
-  Building,
-  DollarSign,
-  Plus,
-  TrendingUp,
-  PieChart as PieChartIcon,
-  BarChart3,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  Wrench,
-  Sparkles,
-  ChevronRight,
-  Phone,
-  ExternalLink,
-  PartyPopper,
-  Share2,
-  Copy,
   Check,
-  Globe
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Copy,
+  DollarSign,
+  ExternalLink,
+  Globe,
+  PartyPopper,
+  Phone,
+  PieChart as PieChartIcon,
+  Plus,
+  Share2,
+  Sparkles,
+  TrendingUp,
+  Wrench
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import {
-  ResponsiveContainer,
-  ComposedChart,
-  BarChart,
+  Area,
   AreaChart,
   Bar,
-  Line,
-  Area,
-  PieChart,
-  Pie,
+  BarChart,
+  CartesianGrid,
   Cell,
-  XAxis,
-  YAxis,
+  ComposedChart,
+  Line,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
   Tooltip,
-  CartesianGrid
+  XAxis,
+  YAxis
 } from 'recharts';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { DatePicker } from '../components/ui/DatePicker';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/Dialog';
+import { PhoneNumberDisplay } from '../components/ui/PhoneNumberDisplay';
 import { useHotel } from '../context/HotelContext';
 import { useModal } from '../context/ModalContext';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/Dialog';
-import { DatePicker } from '../components/ui/DatePicker';
-import { formatCurrency } from '../lib/utils';
 import {
   fetchLivePublicHolidays,
   getUpcomingEventsFromList,
   type HotelEvent
 } from '../data/festivalData';
+import { formatCurrency } from '../lib/utils';
 
 // Custom Tooltip for Recharts
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -86,7 +87,7 @@ export const DashboardPage: React.FC = () => {
   const [isTaggedDialogOpen, setIsTaggedDialogOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-  
+
   // Live Public Holiday API State
   const [liveEvents, setLiveEvents] = useState<HotelEvent[]>([]);
   const [selectedCountry] = useState<string>('IN');
@@ -393,31 +394,28 @@ export const DashboardPage: React.FC = () => {
                 <div className="bg-[var(--muted)] p-0.5 rounded-lg flex items-center text-xs">
                   <button
                     onClick={() => setChartType('combo')}
-                    className={`px-2.5 py-1 rounded-md font-medium text-[11px] transition-all cursor-pointer ${
-                      chartType === 'combo'
+                    className={`px-2.5 py-1 rounded-md font-medium text-[11px] transition-all cursor-pointer ${chartType === 'combo'
                         ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-semibold'
                         : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                    }`}
+                      }`}
                   >
                     Combo (Bar+Line)
                   </button>
                   <button
                     onClick={() => setChartType('bar')}
-                    className={`px-2.5 py-1 rounded-md font-medium text-[11px] transition-all cursor-pointer ${
-                      chartType === 'bar'
+                    className={`px-2.5 py-1 rounded-md font-medium text-[11px] transition-all cursor-pointer ${chartType === 'bar'
                         ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-semibold'
                         : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                    }`}
+                      }`}
                   >
                     Bar Chart
                   </button>
                   <button
                     onClick={() => setChartType('area')}
-                    className={`px-2.5 py-1 rounded-md font-medium text-[11px] transition-all cursor-pointer ${
-                      chartType === 'area'
+                    className={`px-2.5 py-1 rounded-md font-medium text-[11px] transition-all cursor-pointer ${chartType === 'area'
                         ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-semibold'
                         : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                    }`}
+                      }`}
                   >
                     Area Curve
                   </button>
@@ -445,7 +443,7 @@ export const DashboardPage: React.FC = () => {
                   <ComposedChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
                     <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
+                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
                     <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} unit="%" domain={[0, 100]} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[6, 6, 0, 0]} maxBarSize={36} />
@@ -455,7 +453,7 @@ export const DashboardPage: React.FC = () => {
                   <BarChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
                     <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
+                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
                     <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} unit="%" domain={[0, 100]} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={28} />
@@ -471,7 +469,7 @@ export const DashboardPage: React.FC = () => {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
                     <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
+                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
                     <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} unit="%" domain={[0, 100]} />
                     <Tooltip content={<CustomTooltip />} />
                     <Area yAxisId="left" type="monotone" dataKey="revenue" name="Revenue" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
@@ -680,7 +678,7 @@ export const DashboardPage: React.FC = () => {
                               </span>
                             </div>
                             <div className="text-[11px] text-[var(--muted-foreground)] flex items-center gap-1 mt-0.5">
-                              <Phone className="w-3 h-3 text-[var(--muted-foreground)]" /> {res.phone}
+                              <Phone className="w-3 h-3 text-[var(--muted-foreground)]" /> <PhoneNumberDisplay value={res.phone} />
                             </div>
                           </div>
                         </div>
@@ -692,11 +690,10 @@ export const DashboardPage: React.FC = () => {
                       <td className="py-3 px-3">
                         <div className="font-medium text-[var(--foreground)]">{res.eta || '12:00 PM'}</div>
                         <span
-                          className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            res.status === 'CHECKED_IN'
+                          className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${res.status === 'CHECKED_IN'
                               ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                               : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                          }`}
+                            }`}
                         >
                           {res.status === 'CHECKED_IN' ? 'Checked In' : 'Expected'}
                         </span>

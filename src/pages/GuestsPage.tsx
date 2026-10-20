@@ -1,33 +1,37 @@
-import React, { useState } from 'react';
+import type { CountryCode } from 'libphonenumber-js';
 import {
-  Search,
-  ShieldCheck,
-  ShieldAlert,
-  Users,
-  Star,
-  Phone,
-  Mail,
-  Grid,
-  List,
-  Plus,
-  Sparkles,
   Award,
   CalendarDays,
-  CreditCard,
-  Clock,
   ChevronRight,
+  Clock,
+  CreditCard,
   Filter,
-  X,
+  Grid,
+  List,
+  Mail,
+  Phone,
+  Plus,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
   SlidersHorizontal,
-  TrendingUp
+  Sparkles,
+  Star,
+  TrendingUp,
+  Users,
+  X
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
+import { PhoneNumberDisplay } from '../components/ui/PhoneNumberDisplay';
+import { PhoneNumberInput } from '../components/ui/PhoneNumberInput';
 import { useHotel } from '../context/HotelContext';
 import { useModal } from '../context/ModalContext';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { formatCurrency, cn } from '../lib/utils';
+import { normalizePhoneNumber } from '../lib/phone';
+import { cn, formatCurrency } from '../lib/utils';
 import type { Reservation } from '../types/hotel';
 
 export const GuestsPage: React.FC = () => {
@@ -43,6 +47,8 @@ export const GuestsPage: React.FC = () => {
   const [showAddGuestModal, setShowAddGuestModal] = useState(false);
   const [newGuestName, setNewGuestName] = useState('');
   const [newGuestPhone, setNewGuestPhone] = useState('');
+  const [newGuestPhoneCountry, setNewGuestPhoneCountry] = useState<CountryCode>('IN');
+  const [newGuestPhoneError, setNewGuestPhoneError] = useState('');
   const [newGuestEmail, setNewGuestEmail] = useState('');
   const [newGuestIdType, setNewGuestIdType] = useState('Passport');
   const [newGuestIdNum, setNewGuestIdNum] = useState('');
@@ -89,10 +95,15 @@ export const GuestsPage: React.FC = () => {
   const handleCreateGuestProfile = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGuestName.trim()) return;
+    if (!normalizePhoneNumber(newGuestPhone, newGuestPhoneCountry)) {
+      setNewGuestPhoneError('Enter a valid phone number for the selected country.');
+      return;
+    }
     alert(`🎉 Guest profile for "${newGuestName}" created successfully in DeskFlow CRM!`);
     setShowAddGuestModal(false);
     setNewGuestName('');
     setNewGuestPhone('');
+    setNewGuestPhoneError('');
     setNewGuestEmail('');
   };
 
@@ -165,7 +176,7 @@ export const GuestsPage: React.FC = () => {
       {/* ========================================================= */}
       {viewMode === 'split' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
-          
+
           {/* LEFT COLUMN: GUEST DIRECTORY LIST PANEL (3.5 cols on wide screens) */}
           <div className={cn(
             'lg:col-span-4 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 flex flex-col space-y-4 shadow-sm',
@@ -252,7 +263,7 @@ export const GuestsPage: React.FC = () => {
                             {res.guestName}
                           </p>
                           <p className="text-[11px] text-[var(--muted-foreground)] font-mono mt-0.5 truncate">
-                            {res.phone}
+                            <PhoneNumberDisplay value={res.phone} />
                           </p>
                         </div>
                       </div>
@@ -302,10 +313,10 @@ export const GuestsPage: React.FC = () => {
                           <span key={tag} className={cn(
                             "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border",
                             tag.toLowerCase() === 'vip' ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" :
-                            tag.toLowerCase() === 'returning' ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" :
-                            tag.toLowerCase() === 'late check-out' ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" :
-                            tag.toLowerCase() === 'allergic' ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" :
-                            "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]"
+                              tag.toLowerCase() === 'returning' ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" :
+                                tag.toLowerCase() === 'late check-out' ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" :
+                                  tag.toLowerCase() === 'allergic' ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" :
+                                    "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]"
                           )}>
                             {tag}
                           </span>
@@ -314,7 +325,7 @@ export const GuestsPage: React.FC = () => {
 
                       <p className="text-xs text-[var(--muted-foreground)] font-mono flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
-                        <span className="font-semibold text-[var(--foreground)]">{selectedGuest.phone}</span>
+                        <PhoneNumberDisplay value={selectedGuest.phone} className="font-semibold text-[var(--foreground)]" />
                         <span>•</span>
                         <Mail className="w-3.5 h-3.5 text-[var(--muted-foreground)] shrink-0" />
                         <span>{selectedGuest.email || 'No email attached'}</span>
@@ -464,8 +475,8 @@ export const GuestsPage: React.FC = () => {
                               history.status === 'CHECKED_IN'
                                 ? 'clean'
                                 : history.status === 'CANCELLED'
-                                ? 'dirty'
-                                : 'secondary'
+                                  ? 'dirty'
+                                  : 'secondary'
                             }
                             className="text-[10px] px-2.5 py-0.5 font-bold uppercase"
                           >
@@ -537,7 +548,7 @@ export const GuestsPage: React.FC = () => {
                       <div>
                         <span className="block text-[10px] font-bold text-[var(--muted-foreground)]">Phone Contact</span>
                         <span className="text-[var(--foreground)] font-mono font-bold flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3 text-[var(--primary)]" /> {res.phone}
+                          <Phone className="w-3 h-3 text-[var(--primary)]" /> <PhoneNumberDisplay value={res.phone} />
                         </span>
                       </div>
                       <div>
@@ -598,7 +609,7 @@ export const GuestsPage: React.FC = () => {
                       <td className="py-3 px-4">
                         <div className="space-y-0.5">
                           <div className="font-mono text-xs text-[var(--foreground)] flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-[var(--primary)]" /> {res.phone}
+                            <Phone className="w-3 h-3 text-[var(--primary)]" /> <PhoneNumberDisplay value={res.phone} />
                           </div>
                           <div className="text-[11px] text-[var(--muted-foreground)] flex items-center gap-1">
                             <Mail className="w-3 h-3 text-[var(--muted-foreground)]" /> {res.email}
@@ -651,7 +662,7 @@ export const GuestsPage: React.FC = () => {
       {/* NEW GUEST PROFILE MODAL */}
       {showAddGuestModal && (
         <div className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-[var(--card)] border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden">
+          <Card className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto bg-[var(--card)] border-[var(--border)] rounded-2xl shadow-2xl">
             <CardHeader className="p-4 border-b border-[var(--border)] flex flex-row items-center justify-between">
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[var(--primary)]" /> Add New Guest CRM Profile
@@ -664,10 +675,18 @@ export const GuestsPage: React.FC = () => {
                   <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">Full Guest Name</label>
                   <Input placeholder="e.g. Marcus Vance" value={newGuestName} onChange={e => setNewGuestName(e.target.value)} required className="h-9 text-xs rounded-xl" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <div>
                     <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">Phone Number</label>
-                    <Input placeholder="+91 98765 43210" value={newGuestPhone} onChange={e => setNewGuestPhone(e.target.value)} required className="h-9 text-xs rounded-xl font-mono" />
+                    <PhoneNumberInput
+                      value={newGuestPhone}
+                      country={newGuestPhoneCountry}
+                      onChange={(value, country) => { setNewGuestPhone(value); setNewGuestPhoneCountry(country); setNewGuestPhoneError(''); }}
+                      placeholder="98765 43210"
+                      required
+                      className="[&>div]:h-12 [&_button]:px-4 [&_input]:text-base"
+                    />
+                    {newGuestPhoneError && <p className="mt-1 text-[10px] font-semibold text-rose-500">{newGuestPhoneError}</p>}
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">Email Address</label>

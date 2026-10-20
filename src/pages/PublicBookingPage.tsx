@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import type { CountryCode } from 'libphonenumber-js';
 import {
-  ChevronLeft,
   Bed,
   Calendar,
-  CheckCircle2,
-  Copy,
   Check,
-  Users,
+  CheckCircle2,
+  ChevronLeft,
   Clock,
-  ShieldCheck
+  Copy,
+  ShieldCheck,
+  Users
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { PhoneNumberDisplay } from '../components/ui/PhoneNumberDisplay';
+import { PhoneNumberInput } from '../components/ui/PhoneNumberInput';
 import { useHotel } from '../context/HotelContext';
+import { normalizePhoneNumber } from '../lib/phone';
 
 export const PublicBookingPage: React.FC = () => {
   const { hotelId } = useParams<{ hotelId?: string }>();
@@ -37,6 +41,7 @@ export const PublicBookingPage: React.FC = () => {
   // Guest Info State
   const [guestName, setGuestName] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>('IN');
   const [email, setEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
 
@@ -86,7 +91,11 @@ export const PublicBookingPage: React.FC = () => {
   const handleNextToStep3 = () => {
     const errs: { guestName?: string; phone?: string; email?: string } = {};
     if (!guestName.trim()) errs.guestName = 'Full Name is required';
-    if (!phone.trim()) errs.phone = 'Phone number is required';
+    if (!phone.trim()) {
+      errs.phone = 'Phone number is required';
+    } else if (!normalizePhoneNumber(phone, phoneCountry)) {
+      errs.phone = 'Enter a valid phone number for the selected country.';
+    }
 
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -99,7 +108,8 @@ export const PublicBookingPage: React.FC = () => {
 
   const handleBookingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!guestName || !phone) return;
+    const normalizedPhone = normalizePhoneNumber(phone, phoneCountry);
+    if (!guestName.trim() || !normalizedPhone) return;
 
     setIsSubmitting(true);
 
@@ -111,7 +121,7 @@ export const PublicBookingPage: React.FC = () => {
 
       const newRes = addReservation({
         guestName,
-        phone,
+        phone: normalizedPhone,
         email: email || 'guest@example.com',
         roomNumber: roomNum,
         roomType: selectedType?.name || 'Deluxe Suite',
@@ -131,7 +141,7 @@ export const PublicBookingPage: React.FC = () => {
       setConfirmedBooking({
         id: newRes.id,
         guestName,
-        phone,
+        phone: normalizedPhone,
         email: email || 'guest@example.com',
         roomTypeName: selectedType?.name || 'Deluxe Suite',
         roomNumber: roomNum,
@@ -165,7 +175,7 @@ export const PublicBookingPage: React.FC = () => {
 
       {/* CENTERED CARD CONTAINER (Reference Layout using DeskFlow Theme Tokens) */}
       <div className="w-full max-w-[480px] bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-[640px] relative">
-        
+
         {/* TOP HEADER */}
         <header className="px-5 pt-5 pb-3 bg-[var(--card)] border-b border-[var(--border)] space-y-3">
           <div className="flex items-center justify-between">
@@ -295,11 +305,10 @@ export const PublicBookingPage: React.FC = () => {
                             <div
                               key={rt.id}
                               onClick={() => setSelectedTypeId(rt.id)}
-                              className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                                isSelected
-                                  ? 'bg-[var(--primary)]/10 border-[var(--primary)] ring-1 ring-[var(--primary)]/50 shadow-sm'
-                                  : 'bg-[var(--background)] border-[var(--border)] hover:border-[var(--primary)]/50'
-                              }`}
+                              className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${isSelected
+                                ? 'bg-[var(--primary)]/10 border-[var(--primary)] ring-1 ring-[var(--primary)]/50 shadow-sm'
+                                : 'bg-[var(--background)] border-[var(--border)] hover:border-[var(--primary)]/50'
+                                }`}
                             >
                               <div>
                                 <h4 className="text-xs font-bold text-[var(--foreground)] flex items-center gap-2">
@@ -346,12 +355,16 @@ export const PublicBookingPage: React.FC = () => {
 
                     <div>
                       <label className="block text-xs font-bold text-[var(--muted-foreground)] mb-1.5">Phone Number *</label>
-                      <input
-                        type="tel"
-                        placeholder="+91 98765 43210"
+                      <PhoneNumberInput
                         value={phone}
-                        onChange={e => setPhone(e.target.value)}
-                        className="w-full h-12 px-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] placeholder-[var(--muted-foreground)] outline-none focus:ring-2 focus:ring-[var(--primary)] transition-colors"
+                        country={phoneCountry}
+                        onChange={(value, country) => {
+                          setPhone(value);
+                          setPhoneCountry(country);
+                          if (errors.phone) setErrors(prev => ({ ...prev, phone: undefined }));
+                        }}
+                        placeholder="98765 43210"
+                        required
                       />
                       {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone}</p>}
                     </div>
@@ -400,7 +413,7 @@ export const PublicBookingPage: React.FC = () => {
 
                       <div className="flex justify-between items-center pb-2 border-b border-[var(--border)]">
                         <span className="text-[var(--muted-foreground)]">Phone Number</span>
-                        <span className="font-mono font-bold text-[var(--foreground)]">{phone}</span>
+                        <PhoneNumberDisplay value={phone} country={phoneCountry} className="font-mono font-bold text-[var(--foreground)]" />
                       </div>
 
                       {email && (
@@ -454,7 +467,7 @@ export const PublicBookingPage: React.FC = () => {
                     Thank You, {confirmedBooking.guestName}!
                   </h2>
                   <p className="text-xs text-[var(--muted-foreground)] max-w-xs mx-auto">
-                    Your stay is confirmed. Booking code dispatched to <span className="text-[var(--foreground)] font-semibold">{confirmedBooking.phone}</span>.
+                    Your stay is confirmed. Booking code dispatched to <PhoneNumberDisplay value={confirmedBooking.phone} className="text-[var(--foreground)] font-semibold" />.
                   </p>
                 </div>
 

@@ -1,11 +1,12 @@
+import { Building2, CheckCircle2, Printer } from 'lucide-react';
 import React, { useState } from 'react';
-import { Printer, CheckCircle2, Building2 } from 'lucide-react';
-import { useModal } from '../../context/ModalContext';
 import { useHotel } from '../../context/HotelContext';
-import { Dialog, DialogContent, DialogTitle } from '../ui/Dialog';
-import { Button } from '../ui/Button';
+import { useModal } from '../../context/ModalContext';
+import { cn, formatCurrency } from '../../lib/utils';
 import { Badge } from '../ui/Badge';
-import { formatCurrency, cn } from '../../lib/utils';
+import { Button } from '../ui/Button';
+import { Dialog, DialogContent, DialogTitle } from '../ui/Dialog';
+import { PhoneNumberDisplay } from '../ui/PhoneNumberDisplay';
 
 export const FolioModal: React.FC = () => {
   const { isFolioOpen, closeFolio, activeFolioReservation } = useModal();
@@ -89,10 +90,10 @@ export const FolioModal: React.FC = () => {
                       <span key={tag} className={cn(
                         "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
                         tag.toLowerCase() === 'vip' ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" :
-                        tag.toLowerCase() === 'returning' ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" :
-                        tag.toLowerCase() === 'late check-out' ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" :
-                        tag.toLowerCase() === 'allergic' ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" :
-                        "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]"
+                          tag.toLowerCase() === 'returning' ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" :
+                            tag.toLowerCase() === 'late check-out' ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" :
+                              tag.toLowerCase() === 'allergic' ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" :
+                                "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]"
                       )}>
                         {tag}
                       </span>
@@ -100,7 +101,7 @@ export const FolioModal: React.FC = () => {
                   </div>
                 )}
               </div>
-              <p className="text-[var(--muted-foreground)] mt-1">{activeFolioReservation.phone}</p>
+              <p className="text-[var(--muted-foreground)] mt-1"><PhoneNumberDisplay value={activeFolioReservation.phone} /></p>
               <p className="text-[var(--muted-foreground)]">{activeFolioReservation.email}</p>
             </div>
           </div>

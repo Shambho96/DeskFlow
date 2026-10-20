@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import type { CountryCode } from 'libphonenumber-js';
 import {
-  Key,
   Building,
-  ChevronRight,
   ChevronLeft,
+  ChevronRight,
+  Key,
   Sparkles
 } from 'lucide-react';
-import { useModal } from '../../context/ModalContext';
+import React, { useEffect, useState } from 'react';
 import { useHotel } from '../../context/HotelContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/Dialog';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { useModal } from '../../context/ModalContext';
+import { getPhoneInputParts, normalizePhoneNumber } from '../../lib/phone';
 import { formatCurrency } from '../../lib/utils';
+import { Button } from '../ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/Dialog';
+import { Input } from '../ui/Input';
+import { PhoneNumberInput } from '../ui/PhoneNumberInput';
 
 export const NewReservationModal: React.FC = () => {
   const { isNewReservationOpen, closeNewReservation, prefillReservation } = useModal();
@@ -29,6 +32,8 @@ export const NewReservationModal: React.FC = () => {
 
   // Step 2 State
   const [phone, setPhone] = useState('');
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>('IN');
+  const [phoneError, setPhoneError] = useState('');
   const [guestName, setGuestName] = useState('');
   const [email, setEmail] = useState('');
   const [idType, setIdType] = useState('Aadhaar');
@@ -46,20 +51,27 @@ export const NewReservationModal: React.FC = () => {
       if (prefillReservation.checkIn) setCheckIn(prefillReservation.checkIn);
       if (prefillReservation.checkOut) setCheckOut(prefillReservation.checkOut);
       if (prefillReservation.guestName) setGuestName(prefillReservation.guestName);
-      if (prefillReservation.phone) setPhone(prefillReservation.phone);
+      if (prefillReservation.phone) {
+        const phoneParts = getPhoneInputParts(prefillReservation.phone);
+        setPhone(phoneParts.value);
+        setPhoneCountry(phoneParts.country);
+      }
     }
   }, [prefillReservation, isNewReservationOpen]);
 
   // Mock auto-suggest when typing phone number
-  const handlePhoneChange = (val: string) => {
+  const handlePhoneChange = (val: string, country: CountryCode) => {
     setPhone(val);
-    if (val.includes('98450')) {
+    setPhoneCountry(country);
+    setPhoneError('');
+    const digits = val.replace(/\D/g, '');
+    if (digits.includes('98450')) {
       setGuestName('Arjun Verma');
       setEmail('arjun.verma@example.com');
       setIdType('Aadhaar');
       setIdNumber('4521-8890-1123');
       setSpecialRequests(['High Floor', 'Late Checkout']);
-    } else if (val.includes('98111')) {
+    } else if (digits.includes('98111')) {
       setGuestName('Priya Sundaram');
       setEmail('priya.s@techcorp.in');
       setIdType('Passport');
@@ -87,9 +99,16 @@ export const NewReservationModal: React.FC = () => {
   const grandTotal = subtotal + gstTax;
 
   const handleFinish = (isInstantCheckIn: boolean) => {
+    const normalizedPhone = phone.trim() ? normalizePhoneNumber(phone, phoneCountry) : undefined;
+    if (phone.trim() && !normalizedPhone) {
+      setPhoneError('Enter a valid phone number for the selected country.');
+      setStep(1);
+      return;
+    }
+
     addReservation({
       guestName: guestName || 'Walk-in Guest',
-      phone: phone || '+91 99000 00000',
+      phone: normalizedPhone || '+91 99000 00000',
       email: email || 'guest@example.com',
       roomNumber: selectedRoomNumber,
       roomType: selectedCategory.name,
@@ -139,13 +158,12 @@ export const NewReservationModal: React.FC = () => {
             ].map((s) => (
               <div
                 key={s.num}
-                className={`flex items-center gap-2 p-2 rounded-md text-xs font-semibold border ${
-                  step === s.num
-                    ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
-                    : step > s.num
+                className={`flex items-center gap-2 p-2 rounded-md text-xs font-semibold border ${step === s.num
+                  ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
+                  : step > s.num
                     ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
                     : 'bg-[var(--background)] text-[var(--muted-foreground)] border-[var(--border)]'
-                }`}
+                  }`}
               >
                 <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold">
                   {s.num}
@@ -173,11 +191,13 @@ export const NewReservationModal: React.FC = () => {
                   <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
                     Phone Number
                   </label>
-                  <Input
-                    placeholder="+91 98450 11234"
+                  <PhoneNumberInput
                     value={phone}
-                    onChange={e => handlePhoneChange(e.target.value)}
+                    country={phoneCountry}
+                    onChange={handlePhoneChange}
+                    placeholder="98450 11234"
                   />
+                  {phoneError && <p className="mt-1 text-[10px] font-semibold text-rose-500">{phoneError}</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-1">
@@ -240,11 +260,10 @@ export const NewReservationModal: React.FC = () => {
                       key={tag}
                       type="button"
                       onClick={() => toggleSpecialRequest(tag)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                        specialRequests.includes(tag)
-                          ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                          : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]'
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${specialRequests.includes(tag)
+                        ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                        : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]'
+                        }`}
                     >
                       {tag}
                     </button>
@@ -316,11 +335,10 @@ export const NewReservationModal: React.FC = () => {
                     <div
                       key={rt.id}
                       onClick={() => setSelectedCategoryCode(rt.code)}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        selectedCategoryCode === rt.code
-                          ? 'border-[var(--primary)] bg-[var(--primary)]/10 ring-1 ring-[var(--primary)]'
-                          : 'border-[var(--border)] bg-[var(--background)] hover:bg-[var(--muted)]'
-                      }`}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedCategoryCode === rt.code
+                        ? 'border-[var(--primary)] bg-[var(--primary)]/10 ring-1 ring-[var(--primary)]'
+                        : 'border-[var(--border)] bg-[var(--background)] hover:bg-[var(--muted)]'
+                        }`}
                     >
                       <p className="text-xs font-bold text-[var(--foreground)]">{rt.name}</p>
                       <p className="text-xs text-[var(--primary)] font-bold mt-1">
@@ -344,15 +362,14 @@ export const NewReservationModal: React.FC = () => {
                       key={rm.id}
                       type="button"
                       onClick={() => setSelectedRoomNumber(rm.roomNumber)}
-                      className={`px-3 py-1.5 rounded-md text-xs font-bold border transition-all ${
-                        selectedRoomNumber === rm.roomNumber
-                          ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                          : rm.status === 'CLEAN' && !rm.isOccupied
+                      className={`px-3 py-1.5 rounded-md text-xs font-bold border transition-all ${selectedRoomNumber === rm.roomNumber
+                        ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
+                        : rm.status === 'CLEAN' && !rm.isOccupied
                           ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
                           : rm.isOccupied
-                          ? 'bg-slate-700/20 border-slate-700 text-slate-400 cursor-not-allowed'
-                          : 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
-                      }`}
+                            ? 'bg-slate-700/20 border-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                        }`}
                     >
                       {rm.roomNumber} ({rm.status})
                     </button>
@@ -405,11 +422,10 @@ export const NewReservationModal: React.FC = () => {
                       key={pm.id}
                       type="button"
                       onClick={() => setPaymentMethod(pm.id as any)}
-                      className={`p-2.5 rounded-lg border text-xs font-bold transition-all ${
-                        paymentMethod === pm.id
-                          ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
-                          : 'bg-[var(--background)] border-[var(--border)] hover:bg-[var(--muted)]'
-                      }`}
+                      className={`p-2.5 rounded-lg border text-xs font-bold transition-all ${paymentMethod === pm.id
+                        ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
+                        : 'bg-[var(--background)] border-[var(--border)] hover:bg-[var(--muted)]'
+                        }`}
                     >
                       {pm.label}
                     </button>

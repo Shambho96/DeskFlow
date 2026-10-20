@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import type { CountryCode } from 'libphonenumber-js';
+import { AlertCircle, Building2, CheckCircle2, Lock, Mail, Shield, User } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { getPhoneInputParts, normalizePhoneNumber } from '../../lib/phone';
+import type { TeamMember, TeamRole, UpdateMemberInput } from '../../types/team';
+import { Button } from '../ui/Button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '../ui/Dialog';
-import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Shield, User, Lock, Mail, Phone, AlertCircle, Building2, CheckCircle2 } from 'lucide-react';
-import type { TeamRole, TeamMember, UpdateMemberInput } from '../../types/team';
+import { PhoneNumberInput } from '../ui/PhoneNumberInput';
 
 interface EditTeamMemberModalProps {
   open: boolean;
@@ -34,6 +37,7 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
   const [role, setRole] = useState<TeamRole>('STAFF');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>('IN');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,7 +48,9 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
       setName(member.name || '');
       setRole(member.role);
       setEmail(member.email || '');
-      setPhone(member.phone || '');
+      const phoneParts = getPhoneInputParts(member.phone || '');
+      setPhone(phoneParts.value);
+      setPhoneCountry(phoneParts.country);
       setPassword('');
       setError(null);
     }
@@ -64,6 +70,12 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
     // 2. WhatsApp / Phone number is MUST for both Manager and Staff
     if (!phone.trim()) {
       setError('WhatsApp / Phone number is required.');
+      return;
+    }
+
+    const normalizedPhone = normalizePhoneNumber(phone, phoneCountry);
+    if (!normalizedPhone) {
+      setError('Enter a valid phone number for the selected country.');
       return;
     }
 
@@ -90,7 +102,7 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
         name: name.trim(),
         role: isOwner ? role : 'STAFF',
         email: email.trim() || undefined,
-        phone: phone.trim(),
+        phone: normalizedPhone,
         password: role === 'MANAGER' && password.trim() ? password.trim() : undefined,
       });
 
@@ -144,11 +156,10 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setRole('STAFF')}
-                  className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                    role === 'STAFF'
-                      ? 'border-[var(--primary)] bg-[var(--primary)]/5 ring-1 ring-[var(--primary)]'
-                      : 'border-[var(--border)] hover:bg-[var(--muted)]/40'
-                  }`}
+                  className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${role === 'STAFF'
+                    ? 'border-[var(--primary)] bg-[var(--primary)]/5 ring-1 ring-[var(--primary)]'
+                    : 'border-[var(--border)] hover:bg-[var(--muted)]/40'
+                    }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="w-7 h-7 rounded-lg bg-[var(--muted)] flex items-center justify-center shrink-0">
@@ -165,11 +176,10 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setRole('MANAGER')}
-                  className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                    role === 'MANAGER'
-                      ? 'border-[var(--primary)] bg-[var(--primary)]/5 ring-1 ring-[var(--primary)]'
-                      : 'border-[var(--border)] hover:bg-[var(--muted)]/40'
-                  }`}
+                  className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${role === 'MANAGER'
+                    ? 'border-[var(--primary)] bg-[var(--primary)]/5 ring-1 ring-[var(--primary)]'
+                    : 'border-[var(--border)] hover:bg-[var(--muted)]/40'
+                    }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
@@ -235,17 +245,13 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
               <label className="block font-medium text-[var(--foreground)] mb-1">
                 WhatsApp / Phone Number <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <Phone className="w-3.5 h-3.5 text-[var(--muted-foreground)] absolute left-2.5 top-2.5 pointer-events-none" />
-                <Input
-                  type="tel"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  required
-                  className="h-8.5 pl-8 text-xs"
-                />
-              </div>
+              <PhoneNumberInput
+                value={phone}
+                country={phoneCountry}
+                onChange={(value, country) => { setPhone(value); setPhoneCountry(country); }}
+                placeholder="98765 43210"
+                required
+              />
             </div>
 
             {/* Password field - MUST for Manager, not required for Staff */}
