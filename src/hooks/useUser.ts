@@ -19,6 +19,14 @@ export interface AuthResponse {
   user: UserContext;
 }
 
+export interface OutletSwitchState {
+  isSwitching: boolean;
+  targetOutletId: number | null;
+  targetOutletName?: string;
+}
+
+const OUTLET_SWITCH_KEY = 'app:outlet-switching-state';
+
 export function useUser() {
   const {
     data: user,
@@ -34,6 +42,13 @@ export function useUser() {
     dedupingInterval: 300_000, // 5 min dedupe interval
     keepPreviousData: true,    // Retain user state during silent background revalidations
   });
+
+  // Global outlet switching state shared across all components via SWR cache
+  const { data: switchState, mutate: setSwitchState } = useSWR<OutletSwitchState>(
+    OUTLET_SWITCH_KEY,
+    null,
+    { fallbackData: { isSwitching: false, targetOutletId: null } }
+  );
 
   // Listen for global auth session expiry events
   useEffect(() => {
@@ -89,18 +104,32 @@ export function useUser() {
   /**
    * 3. Switch active hotel outlet (POST /api/v1/auth/switch-outlet)
    */
-  async function switchOutlet(target_outlet_id: string | number) {
+  async function switchOutlet(target_outlet_id: string | number, targetOutletName?: string) {
     const numericId = Number(target_outlet_id);
     const targetId = !Number.isNaN(numericId) ? numericId : target_outlet_id;
 
-    const res = await customFetch<AuthResponse>('/api/v1/auth/switch-outlet', {
-      method: 'POST',
-      body: JSON.stringify({ target_outlet_id: targetId }),
-    });
+    // Immediately trigger the full-screen frosted blur overlay
+    await setSwitchState({
+      isSwitching: true,
+      targetOutletId: Number(targetId),
+      targetOutletName,
+    }, false);
 
-    // Update active user context with new active_outlet_id
-    await mutate(res.user, false);
-    return res;
+    try {
+      const res = await customFetch<AuthResponse>('/api/v1/auth/switch-outlet', {
+        method: 'POST',
+        body: JSON.stringify({ target_outlet_id: targetId }),
+      });
+
+      // Update active user context with new active_outlet_id
+      await mutate(res.user, false);
+
+      // Brief smooth settling window so the user experiences a cohesive transition
+      await new Promise(resolve => setTimeout(resolve, 400));
+      return res;
+    } finally {
+      await setSwitchState({ isSwitching: false, targetOutletId: null }, false);
+    }
   }
 
   return {
@@ -109,6 +138,8 @@ export function useUser() {
     isValidating,
     loggedOut,
     error,
+    isSwitchingOutlet: switchState?.isSwitching ?? false,
+    targetOutletName: switchState?.targetOutletName,
     login,
     logout,
     switchOutlet,

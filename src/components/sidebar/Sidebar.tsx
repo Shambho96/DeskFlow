@@ -15,7 +15,7 @@ import {
 import { cn } from '../../lib/utils';
 import { useHotel } from '../../context/HotelContext';
 import { useUser } from '../../hooks/useUser';
-import { useOutlets } from '../../hooks/useOutlets';
+import { useOutlets, outletLabel } from '../../hooks/useOutlets';
 import type { OutletInfo } from '../../hooks/useOutlets';
 
 // ─── Outlet Initials ──────────────────────────────────────────────────────────
@@ -108,8 +108,10 @@ const OutletSwitcher: React.FC<OutletSwitcherProps> = ({ isCollapsed }) => {
 
   const handleSwitch = async (id: number) => {
     if (id === activeId) { setOpen(false); return; }
+    const target = outlets.find(o => o.id === id);
+    const targetName = target ? outletLabel(target) : undefined;
     setSwitching(id);
-    try { await switchOutlet(id); }
+    try { await switchOutlet(id, targetName); }
     finally { setSwitching(null); setOpen(false); }
   };
 

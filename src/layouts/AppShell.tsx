@@ -6,6 +6,7 @@ import { NewReservationModal } from '../components/modals/NewReservationModal';
 import { FolioModal } from '../components/modals/FolioModal';
 import { FastSearchModal } from '../components/modals/FastSearchModal';
 import { ShiftCloseModal } from '../components/modals/ShiftCloseModal';
+import { OutletSwitchOverlay } from '../components/ui/OutletSwitchOverlay';
 import { BedDouble } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useUser } from '../hooks/useUser';
@@ -104,11 +105,12 @@ export const AppShell: React.FC = () => {
         </main>
       </div>
 
-      {/* GLOBAL MODALS */}
+      {/* GLOBAL MODALS & OVERLAYS */}
       <NewReservationModal />
       <FolioModal />
       <FastSearchModal />
       <ShiftCloseModal />
+      <OutletSwitchOverlay />
     </div>
   );
 };
