@@ -1,31 +1,32 @@
-import React, { useState } from 'react';
 import {
-  Users,
-  UserPlus,
-  Search,
-  Shield,
-  Crown,
-  User,
-  Phone,
   AlertCircle,
   Building,
-  RefreshCw,
-  Pencil,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Crown,
+  Pencil,
+  Phone,
+  RefreshCw,
+  Search,
+  Shield,
+  User,
+  UserPlus,
+  Users,
 } from 'lucide-react';
-import { Card, CardContent } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
-import { AddTeamMemberModal } from './AddTeamMemberModal';
-import { EditTeamMemberModal } from './EditTeamMemberModal';
+import React, { useState } from 'react';
+import { useOutlets } from '../../hooks/useOutlets';
 import { useTeam } from '../../hooks/useTeam';
 import { useUser } from '../../hooks/useUser';
-import { useOutlets } from '../../hooks/useOutlets';
 import type { TeamMember } from '../../types/team';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { Card, CardContent } from '../ui/Card';
+import { Input } from '../ui/Input';
+import { PhoneNumberDisplay } from '../ui/PhoneNumberDisplay';
+import { AddTeamMemberModal } from './AddTeamMemberModal';
+import { EditTeamMemberModal } from './EditTeamMemberModal';
 
 export const TeamManagementTab: React.FC = () => {
   const { user } = useUser();
@@ -331,7 +332,7 @@ export const TeamManagementTab: React.FC = () => {
                           {member.phone ? (
                             <span className="flex items-center gap-1.5 text-[var(--foreground)] font-mono text-[11px]">
                               <Phone className="w-3 h-3 text-[var(--muted-foreground)]" />
-                              {member.phone}
+                              <PhoneNumberDisplay value={member.phone} className="font-mono text-[11px]" />
                             </span>
                           ) : (
                             <span className="text-[var(--muted-foreground)]">—</span>
@@ -388,11 +389,10 @@ export const TeamManagementTab: React.FC = () => {
                                 size="sm"
                                 onClick={() => handleToggle(member)}
                                 disabled={isToggling}
-                                className={`h-7 px-2.5 text-[11px] cursor-pointer transition-colors ${
-                                  member.isActive
+                                className={`h-7 px-2.5 text-[11px] cursor-pointer transition-colors ${member.isActive
                                     ? 'hover:text-red-600 hover:border-red-300 hover:bg-red-50/50 dark:hover:bg-red-950/20'
                                     : 'hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20'
-                                }`}
+                                  }`}
                               >
                                 {isToggling ? (
                                   <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -497,11 +497,10 @@ export const TeamManagementTab: React.FC = () => {
                           variant={item === page ? 'default' : 'outline'}
                           onClick={() => setPage(item)}
                           disabled={isLoading}
-                          className={`h-7 min-w-7 px-2 text-xs font-semibold cursor-pointer ${
-                            item === page
+                          className={`h-7 min-w-7 px-2 text-xs font-semibold cursor-pointer ${item === page
                               ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
                               : 'text-[var(--foreground)] hover:bg-[var(--muted)]'
-                          }`}
+                            }`}
                         >
                           {item}
                         </Button>
