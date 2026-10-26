@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw } from 'lucide-react';
 import { useUser } from '../../hooks/useUser';
 
 /**
@@ -23,11 +23,15 @@ export const OutletSwitchOverlay: React.FC = () => {
       className="fixed inset-0 z-[99999] bg-black/40 dark:bg-black/60 backdrop-blur-md flex flex-col items-center justify-center p-4 select-none pointer-events-auto cursor-wait transition-all duration-300 animate-in fade-in"
     >
       <div className="relative bg-[var(--card)]/90 border border-[var(--border)] shadow-2xl rounded-3xl p-6 sm:p-8 max-w-sm w-full flex flex-col items-center text-center backdrop-blur-xl space-y-4">
-        {/* Glow & Icon */}
+        {/* Glow & New DeskFlow Brand Logo */}
         <div className="relative flex items-center justify-center">
-          <div className="absolute inset-0 rounded-2xl bg-[var(--primary)] blur-lg opacity-40 animate-pulse" />
-          <div className="relative w-16 h-16 rounded-2xl bg-[var(--primary)] flex items-center justify-center text-white shadow-xl shadow-[var(--primary)]/30">
-            <Building2 className="w-8 h-8" />
+          <div className="absolute inset-0 rounded-2xl bg-[var(--primary)] blur-xl opacity-30 animate-pulse" />
+          <div className="relative w-16 h-16 flex items-center justify-center drop-shadow-lg">
+            <img
+              src="/deskflow-logo.png"
+              alt="DeskFlow Logo"
+              className="w-full h-full object-contain select-none animate-pulse"
+            />
           </div>
           <span className="absolute -top-1 -right-1 flex h-4 w-4">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary)] opacity-75" />
