@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type {
   Room,
   Floor,
@@ -6,8 +6,10 @@ import type {
   Reservation,
   ShiftNote,
   CashRegisterState,
-  RoomStatus
+  RoomStatus,
+  LiveRoomStatus
 } from '../types/hotel';
+import { useRooms } from '../hooks/useRooms';
 import {
   MOCK_ROOMS,
   MOCK_FLOORS,
@@ -48,15 +50,90 @@ interface HotelContextType {
 const HotelContext = createContext<HotelContextType | undefined>(undefined);
 
 export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const {
+    floors: backendFloors,
+    categories: backendCategories,
+    allRooms: backendRooms,
+    updateRoomStatus: apiUpdateRoomStatus,
+  } = useRooms();
+
   const [rooms, setRooms] = useState<Room[]>(MOCK_ROOMS);
   const [floors, setFloors] = useState<Floor[]>(MOCK_FLOORS);
-  const [roomTypes] = useState<RoomType[]>(MOCK_ROOM_TYPES);
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>(MOCK_ROOM_TYPES);
   const [reservations, setReservations] = useState<Reservation[]>(MOCK_RESERVATIONS);
   const [shiftNotes, setShiftNotes] = useState<ShiftNote[]>(MOCK_NOTES);
   const [cashRegister] = useState<CashRegisterState>(INITIAL_REGISTER);
   const [businessDate] = useState<string>('Sep 24, 2026');
   const [propertyName] = useState<string>('DeskFlow — Grand Azure Hotel & Suites');
   const [nightAuditPending] = useState<boolean>(true);
+
+  // Sync with live backend rooms, floors, and categories with bailout checks to prevent render cascades
+  useEffect(() => {
+    if (backendFloors && backendFloors.length > 0) {
+      setFloors(prev => {
+        const isSame = prev.length === backendFloors.length &&
+          backendFloors.every((bf, idx) => prev[idx] && prev[idx].id === String(bf.id) && prev[idx].name === bf.name);
+        if (isSame) return prev;
+        return backendFloors.map(f => ({
+          id: String(f.id),
+          floorNumber: f.floorNumber,
+          name: f.name,
+        }));
+      });
+    }
+  }, [backendFloors]);
+
+  useEffect(() => {
+    if (backendCategories && backendCategories.length > 0) {
+      setRoomTypes(prev => {
+        const isSame = prev.length === backendCategories.length &&
+          backendCategories.every((bc, idx) => prev[idx] && prev[idx].id === String(bc.id) && prev[idx].basePrice === bc.basePrice);
+        if (isSame) return prev;
+        return backendCategories.map(c => ({
+          id: String(c.id),
+          name: c.name,
+          code: c.code || '',
+          basePrice: c.basePrice,
+          maxAdults: c.maxAdults,
+          maxChildren: c.maxChildren,
+        }));
+      });
+    }
+  }, [backendCategories]);
+
+  useEffect(() => {
+    if (backendRooms && backendRooms.length > 0) {
+      setRooms(prev => {
+        const isSame = prev.length === backendRooms.length &&
+          backendRooms.every((br, idx) => {
+            const p = prev[idx];
+            if (!p) return false;
+            let mappedStatus: RoomStatus = 'CLEAN';
+            if (br.status === 'CLEANING') mappedStatus = 'DIRTY';
+            else if (br.status === 'MAINTENANCE') mappedStatus = 'OOO';
+            else if (br.status === 'OCCUPIED') mappedStatus = 'OCCUPIED';
+            return p.id === String(br.id) && p.status === mappedStatus && p.floorId === String(br.floorId);
+          });
+        if (isSame) return prev;
+        return backendRooms.map(r => {
+          let mappedStatus: RoomStatus = 'CLEAN';
+          if (r.status === 'CLEANING') mappedStatus = 'DIRTY';
+          else if (r.status === 'MAINTENANCE') mappedStatus = 'OOO';
+          else if (r.status === 'OCCUPIED') mappedStatus = 'OCCUPIED';
+          else mappedStatus = 'CLEAN';
+
+          return {
+            id: String(r.id),
+            roomNumber: r.roomNumber,
+            floorId: String(r.floorId),
+            typeId: String(r.categoryId),
+            status: mappedStatus,
+            isOccupied: r.status === 'OCCUPIED',
+          };
+        });
+      });
+    }
+  }, [backendRooms]);
 
   // Add Floor
   const addFloor = (name: string): Floor => {
@@ -134,6 +211,20 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setRooms(prev =>
       prev.map(rm => (rm.id === roomId ? { ...rm, status } : rm))
     );
+
+    // If numeric ID, dispatch to backend
+    const numericId = Number(roomId);
+    if (!Number.isNaN(numericId) && numericId > 0) {
+      let liveStatus: LiveRoomStatus = 'AVAILABLE';
+      if (status === 'DIRTY' || status === 'CLEANING') liveStatus = 'CLEANING';
+      else if (status === 'OOO' || status === 'MAINTENANCE') liveStatus = 'MAINTENANCE';
+      else if (status === 'OCCUPIED') liveStatus = 'OCCUPIED';
+      else liveStatus = 'AVAILABLE';
+
+      apiUpdateRoomStatus(numericId, liveStatus).catch(err => {
+        console.error('Failed to update room status on backend:', err);
+      });
+    }
   };
 
   // Add Reservation

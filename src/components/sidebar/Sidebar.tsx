@@ -300,14 +300,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
       <div className="flex flex-col min-h-0">
 
         {/* ── Brand Logo ──────────────────────────────────────────────────── */}
-        <div className={cn('h-14 flex items-center shrink-0', isCollapsed ? 'justify-center px-3' : 'px-4 gap-3')}>
-          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-[var(--primary-foreground)] shrink-0 shadow-sm">
-            <BedDouble className="w-5 h-5 text-[var(--primary-foreground)]" />
+        <div
+          onClick={() => navigate('/')}
+          className={cn(
+            'h-[68px] flex items-center shrink-0 cursor-pointer group transition-all',
+            isCollapsed ? 'justify-center px-1' : 'px-3.5 gap-2.5'
+          )}
+          title="DeskFlow Dashboard"
+        >
+          <div className="w-[52px] h-[52px] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform drop-shadow-md">
+            <img
+              src="/deskflow-logo.png"
+              alt="DeskFlow Logo"
+              className="w-full h-full object-contain select-none"
+            />
           </div>
           {!isCollapsed && (
-            <span className="font-extrabold text-[15px] tracking-tight text-[var(--sidebar-foreground)]">
-              Desk<span className="text-[var(--primary)]">Flow</span>
-            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-black text-base tracking-tight text-[var(--sidebar-foreground)] leading-none group-hover:text-[var(--primary)] transition-colors">
+                Desk<span className="text-[var(--primary)] font-black">Flow</span>
+              </span>
+              <span className="text-[9px] font-bold text-[var(--muted-foreground)] tracking-wider uppercase truncate mt-1">
+                Hotel Operations
+              </span>
+            </div>
           )}
         </div>
 
