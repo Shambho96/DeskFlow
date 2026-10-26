@@ -75,10 +75,15 @@ export const FolioModal: React.FC = () => {
           )}
           {/* Header metadata */}
           <div className="flex justify-between items-start border-b border-[var(--border)] pb-4 text-xs">
-            <div>
-              <p className="font-bold text-sm text-[var(--foreground)]">DeskFlow — Grand Azure Suites & Resort</p>
-              <p className="text-[var(--muted-foreground)]">GSTIN: 29AAAAA0000A1Z5</p>
-              <p className="text-[var(--muted-foreground)]">Beach Road, Ocean Wing, Goa - 403001</p>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 flex items-center justify-center shrink-0">
+                <img src="/deskflow-logo.png" alt="DeskFlow Logo" className="w-full h-full object-contain select-none" />
+              </div>
+              <div>
+                <p className="font-bold text-sm text-[var(--foreground)]">DeskFlow — Grand Azure Suites & Resort</p>
+                <p className="text-[var(--muted-foreground)]">GSTIN: 29AAAAA0000A1Z5</p>
+                <p className="text-[var(--muted-foreground)]">Beach Road, Ocean Wing, Goa - 403001</p>
+              </div>
             </div>
             <div className="text-right">
               <p className="font-bold text-xs">Guest Details:</p>

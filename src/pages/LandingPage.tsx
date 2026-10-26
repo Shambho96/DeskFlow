@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Bed,
   Calendar,
   CheckCircle2,
   Clock,
@@ -14,7 +13,6 @@ import {
   ArrowRight,
   ChevronRight,
   Star,
-  Building2,
   Lock
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -31,8 +29,12 @@ export const LandingPage: React.FC = () => {
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[var(--background)]/80 border-b border-[var(--border)]">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-10 h-10 rounded-xl bg-[var(--primary)] flex items-center justify-center shadow-lg shadow-[var(--primary)]/30">
-              <Bed className="w-5 h-5 text-[var(--primary-foreground)]" />
+            <div className="w-12 h-12 flex items-center justify-center shrink-0 hover:scale-105 transition-transform drop-shadow-md">
+              <img
+                src="/deskflow-logo.png"
+                alt="DeskFlow Logo"
+                className="w-full h-full object-contain select-none"
+              />
             </div>
             <div>
               <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">
@@ -357,8 +359,8 @@ export const LandingPage: React.FC = () => {
       {/* FOOTER */}
       <footer className="py-12 px-6 border-t border-[var(--border)] text-center text-xs text-[var(--muted-foreground)] relative z-10 bg-[var(--background)]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[var(--primary)]" />
+          <div className="flex items-center gap-2.5">
+            <img src="/deskflow-logo.png" alt="DeskFlow Logo" className="w-6 h-6 object-contain select-none drop-shadow-xs" />
             <span className="font-bold text-[var(--foreground)]">Desk<span className="text-[var(--primary)] font-extrabold">Flow</span> — Hotel PMS Platform</span>
           </div>
           <p>© 2026 DeskFlow Technologies. All rights reserved.</p>

@@ -61,6 +61,7 @@
   --spacing: 0.27rem;
 }
 
+
 .dark {
   --background: oklch(0.2223 0.0060 271.1393);
   --foreground: oklch(0.9551 0 0);

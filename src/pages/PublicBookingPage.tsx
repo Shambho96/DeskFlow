@@ -210,8 +210,8 @@ export const PublicBookingPage: React.FC = () => {
             </div>
 
             {/* Right: DeskFlow Brand logo badge */}
-            <div className="w-10 h-10 rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] font-extrabold flex items-center justify-center text-xs shadow-md shrink-0">
-              <Bed className="w-5 h-5" />
+            <div className="w-12 h-12 flex items-center justify-center shrink-0 drop-shadow-md">
+              <img src="/deskflow-logo.png" alt="DeskFlow Logo" className="w-full h-full object-contain select-none" />
             </div>
           </div>
 
@@ -592,9 +592,10 @@ export const PublicBookingPage: React.FC = () => {
             )}
 
             {/* FOOTER BRANDING */}
-            <div className="text-center pt-1">
+            <div className="flex items-center justify-center gap-1.5 pt-1">
+              <img src="/deskflow-logo.png" alt="DeskFlow" className="w-4 h-4 object-contain rounded-xs" />
               <span className="text-[10px] text-[var(--muted-foreground)] font-semibold tracking-wider uppercase">
-                DeskFlow
+                Powered by DeskFlow
               </span>
             </div>
           </footer>

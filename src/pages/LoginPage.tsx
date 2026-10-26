@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bed, Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useUser } from '../hooks/useUser';
@@ -39,8 +39,12 @@ export const LoginPage: React.FC = () => {
             className="inline-flex items-center gap-3 cursor-pointer mb-3"
             onClick={() => navigate('/')}
           >
-            <div className="w-12 h-12 rounded-xl bg-[var(--primary)] flex items-center justify-center shadow-lg shadow-[var(--primary)]/30">
-              <Bed className="w-6 h-6 text-[var(--primary-foreground)]" />
+            <div className="w-24 h-24 flex items-center justify-center hover:scale-105 transition-transform drop-shadow-2xl">
+              <img
+                src="/deskflow-logo.png"
+                alt="DeskFlow Logo"
+                className="w-full h-full object-contain select-none"
+              />
             </div>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
