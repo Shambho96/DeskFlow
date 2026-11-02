@@ -3,6 +3,7 @@ import { X, Layers, Building2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
 import type { BackendFloor, BackendBuilding } from '../../types/hotel';
 import type { UpdateFloorInput } from '../../hooks/useRooms';
 
@@ -102,17 +103,21 @@ export const EditFloorModal: React.FC<EditFloorModalProps> = ({
                 <label className="text-[11px] font-bold text-[var(--muted-foreground)] uppercase flex items-center gap-1">
                   <Building2 className="w-3.5 h-3.5 text-[var(--primary)]" /> Assigned Building / Wing
                 </label>
-                <select
-                  value={buildingId}
-                  onChange={e => setBuildingId(Number(e.target.value))}
-                  className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]"
+                <Select
+                  value={buildingId ? String(buildingId) : undefined}
+                  onValueChange={(val) => setBuildingId(Number(val))}
                 >
-                  {buildings.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {b.name} ({b.buildingType})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]">
+                    <SelectValue placeholder="Select Building" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildings.map(b => (
+                      <SelectItem key={b.id} value={String(b.id)}>
+                        {b.name} ({b.buildingType})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 

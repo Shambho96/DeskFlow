@@ -140,7 +140,7 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5 text-xs">
           {error && (
-            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs">
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[var(--destructive)]/10 border border-[var(--destructive)]/20 text-[var(--destructive)] text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -182,8 +182,8 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
                     }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-                      <Shield className="w-3.5 h-3.5 text-indigo-500" />
+                    <div className="w-7 h-7 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
+                      <Shield className="w-3.5 h-3.5 text-[var(--primary)]" />
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold text-[var(--foreground)] text-xs">Property Manager</p>
@@ -211,7 +211,7 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
             {/* Full Name */}
             <div>
               <label className="block font-medium text-[var(--foreground)] mb-1">
-                Full Name <span className="text-red-500">*</span>
+                Full Name <span className="text-[var(--destructive)]">*</span>
               </label>
               <Input
                 value={name}
@@ -225,7 +225,7 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
             {/* Email field */}
             <div>
               <label className="block font-medium text-[var(--foreground)] mb-1">
-                Email Address {role === 'MANAGER' ? <span className="text-red-500">*</span> : <span className="text-[var(--muted-foreground)] font-normal">(Optional)</span>}
+                Email Address {role === 'MANAGER' ? <span className="text-[var(--destructive)]">*</span> : <span className="text-[var(--muted-foreground)] font-normal">(Optional)</span>}
               </label>
               <div className="relative">
                 <Mail className="w-3.5 h-3.5 text-[var(--muted-foreground)] absolute left-2.5 top-2.5 pointer-events-none" />
@@ -243,7 +243,7 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
             {/* Phone Number - REQUIRED for both Manager and Staff */}
             <div>
               <label className="block font-medium text-[var(--foreground)] mb-1">
-                WhatsApp / Phone Number <span className="text-red-500">*</span>
+                WhatsApp / Phone Number <span className="text-[var(--destructive)]">*</span>
               </label>
               <PhoneNumberInput
                 value={phone}
@@ -257,7 +257,7 @@ export const EditTeamMemberModal: React.FC<EditTeamMemberModalProps> = ({
             {/* Password field - MUST for Manager, not required for Staff */}
             <div>
               <label className="block font-medium text-[var(--foreground)] mb-1">
-                Password {role === 'MANAGER' ? <span className="text-red-500">*</span> : <span className="text-[var(--muted-foreground)] font-normal">(Not required for Staff)</span>}
+                Password {role === 'MANAGER' ? <span className="text-[var(--destructive)]">*</span> : <span className="text-[var(--muted-foreground)] font-normal">(Not required for Staff)</span>}
               </label>
               <div className="relative">
                 <Lock className="w-3.5 h-3.5 text-[var(--muted-foreground)] absolute left-2.5 top-2.5 pointer-events-none" />

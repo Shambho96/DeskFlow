@@ -1,0 +1,106 @@
+name: Frontend Staging Deployment
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build & Deploy Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_MAX_ATTEMPTS: 5
+      AWS_RETRY_MODE: standard
+      S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_STAGING }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_STAGING }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          npm config set fetch-retries 5
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm ci || npm install
+
+      - name: Build project
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_STAGING }}
+
+      - name: Verify build folder
+        run: |
+          if [ ! -d "./dist" ] || [ -z "$(ls -A ./dist)" ]; then
+            echo "::error::dist folder is empty or does not exist."
+            exit 1
+          fi
+          echo "Build OK — $(find dist -type f | wc -l) files found."
+
+      - name: Verify index.html exists
+        run: |
+          if [ ! -f "./dist/index.html" ]; then
+            echo "::error::index.html not found"
+            exit 1
+          fi
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+
+      - name: Upload static assets (long cache)
+        run: |
+          aws s3 sync ./dist s3://${{ env.S3_BUCKET_NAME }} \
+              --delete \
+              --size-only \
+              --exclude "index.html" \
+              --cache-control "public, max-age=31536000, immutable"
+
+      - name: Upload index.html (no cache)
+        run: |
+          aws s3 cp ./dist/index.html s3://${{ env.S3_BUCKET_NAME }}/index.html \
+          --cache-control "no-cache, no-store, must-revalidate"
+
+      - name: Invalidate CloudFront
+        timeout-minutes: 5
+        run: |
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          echo "Invalidation created with ID: $INVALIDATION_ID"
+
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --id "$INVALIDATION_ID"
+          echo "CloudFront cache cleared successfully."
+
+      - name: Deployment summary
+        run: |
+          echo "### Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bucket:** \`${{ env.S3_BUCKET_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY

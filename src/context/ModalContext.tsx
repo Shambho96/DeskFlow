@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState } from 'react';
-import type { Reservation } from '../types/hotel';
 
 interface PrefillReservationData {
   roomNumber?: string;
@@ -16,8 +15,8 @@ interface ModalContextType {
   closeNewReservation: () => void;
 
   isFolioOpen: boolean;
-  activeFolioReservation: Reservation | null;
-  openFolio: (reservation: Reservation) => void;
+  activeFolioReservation: any | null;
+  openFolio: (reservation: any) => void;
   closeFolio: () => void;
 
   isSearchOpen: boolean;
@@ -36,7 +35,7 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [prefillReservation, setPrefillReservation] = useState<PrefillReservationData | null>(null);
 
   const [isFolioOpen, setIsFolioOpen] = useState(false);
-  const [activeFolioReservation, setActiveFolioReservation] = useState<Reservation | null>(null);
+  const [activeFolioReservation, setActiveFolioReservation] = useState<any | null>(null);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isShiftCloseOpen, setIsShiftCloseOpen] = useState(false);
@@ -52,7 +51,7 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPrefillReservation(null);
   };
 
-  const openFolio = (reservation: Reservation) => {
+  const openFolio = (reservation: any) => {
     setActiveFolioReservation(reservation);
     setIsFolioOpen(true);
   };

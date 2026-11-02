@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -7,12 +7,19 @@ import { useUser } from '../hooks/useUser';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useUser();
+  const { login, user } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // If already authenticated, redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/app/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,11 +42,8 @@ export const LoginPage: React.FC = () => {
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div
-            className="inline-flex items-center gap-3 cursor-pointer mb-3"
-            onClick={() => navigate('/')}
-          >
-            <div className="w-24 h-24 flex items-center justify-center hover:scale-105 transition-transform drop-shadow-2xl">
+          <div className="inline-flex items-center gap-3 mb-3">
+            <div className="w-24 h-24 flex items-center justify-center drop-shadow-2xl">
               <img
                 src="/deskflow-logo.png"
                 alt="DeskFlow Logo"
@@ -57,7 +61,7 @@ export const LoginPage: React.FC = () => {
 
         <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-8 shadow-2xl">
           {error && (
-            <div className="mb-5 flex items-start gap-2.5 p-3.5 text-xs text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <div className="mb-5 flex items-start gap-2.5 p-3.5 text-xs text-[var(--destructive)] bg-[var(--destructive)]/10 border border-[var(--destructive)]/20 rounded-xl">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -130,16 +134,12 @@ export const LoginPage: React.FC = () => {
           </form>
 
           <div className="mt-6 pt-6 border-t border-[var(--border)] text-center">
-            <div className="inline-flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 text-xs text-[var(--muted-foreground)] bg-[var(--muted)] px-3 py-1.5 rounded-full border border-[var(--border)]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[var(--primary)]" />
               <span>Shift Register: Secure Hotel Desk Engine</span>
             </div>
           </div>
         </div>
-
-        <p className="mt-6 text-center text-xs text-[var(--muted-foreground)]">
-          Back to <button onClick={() => navigate('/')} className="text-[var(--primary)] underline hover:opacity-80">Marketing Website</button>
-        </p>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { X, BedDouble, Sparkles, Tag, DollarSign, Plus } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
 import { formatCurrency } from '../../lib/utils';
 import type { BackendFloor, BackendRoomCategory, BackendRoom, LiveRoomStatus } from '../../types/hotel';
 import type { UpdateRoomInput } from '../../hooks/useRooms';
@@ -205,16 +206,20 @@ export const EditRoomModal: React.FC<EditRoomModalProps> = ({
                 <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">
                   Operational Status
                 </label>
-                <select
+                <Select
                   value={status}
-                  onChange={e => setStatus(e.target.value as LiveRoomStatus)}
-                  className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]"
+                  onValueChange={(val) => setStatus(val as LiveRoomStatus)}
                 >
-                  <option value="AVAILABLE">AVAILABLE (Vacant)</option>
-                  <option value="OCCUPIED">OCCUPIED (In-house)</option>
-                  <option value="CLEANING">CLEANING (Dirty)</option>
-                  <option value="MAINTENANCE">MAINTENANCE (Repair)</option>
-                </select>
+                  <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]">
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AVAILABLE">AVAILABLE (Vacant)</SelectItem>
+                    <SelectItem value="OCCUPIED">OCCUPIED (In-house)</SelectItem>
+                    <SelectItem value="CLEANING">CLEANING (Dirty)</SelectItem>
+                    <SelectItem value="MAINTENANCE">MAINTENANCE (Repair)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -222,18 +227,21 @@ export const EditRoomModal: React.FC<EditRoomModalProps> = ({
               <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">
                 Assigned Floor Level & Building
               </label>
-              <select
-                value={floorId}
-                onChange={e => setFloorId(Number(e.target.value))}
-                className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]"
-                required
+              <Select
+                value={floorId ? String(floorId) : undefined}
+                onValueChange={(val) => setFloorId(Number(val))}
               >
-                {floors.map(f => (
-                  <option key={f.id} value={f.id}>
-                    Floor {f.floorNumber} — {f.name} {f.buildingName ? `(${f.buildingName})` : ''}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]">
+                  <SelectValue placeholder="Select Floor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {floors.map(f => (
+                    <SelectItem key={f.id} value={String(f.id)}>
+                      Floor {f.floorNumber} — {f.name} {f.buildingName ? `(${f.buildingName})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {mode === 'CATEGORY' ? (
@@ -242,18 +250,21 @@ export const EditRoomModal: React.FC<EditRoomModalProps> = ({
                   <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">
                     Room Category & Pricing
                   </label>
-                  <select
-                    value={categoryId}
-                    onChange={e => setCategoryId(Number(e.target.value))}
-                    className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]"
-                    required
+                  <Select
+                    value={categoryId ? String(categoryId) : undefined}
+                    onValueChange={(val) => setCategoryId(Number(val))}
                   >
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.code ? `(${c.code})` : ''} — {formatCurrency(c.basePrice)}/night
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(c => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.name} {c.code ? `(${c.code})` : ''} — {formatCurrency(c.basePrice)}/night
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {selectedCategory && (

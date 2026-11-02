@@ -301,7 +301,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
 
         {/* ── Brand Logo ──────────────────────────────────────────────────── */}
         <div
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/app/dashboard')}
           className={cn(
             'h-[68px] flex items-center shrink-0 cursor-pointer group transition-all',
             isCollapsed ? 'justify-center px-1' : 'px-3.5 gap-2.5'
@@ -367,12 +367,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
               src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(displayName)}`}
               alt="Avatar"
               title={`${displayName} (${displayRole})`}
-              className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 shrink-0"
+              className="w-8 h-8 rounded-full bg-[var(--muted)] border border-[var(--border)] shrink-0"
             />
             <button
               onClick={handleLogout}
               title="Sign out of shift"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10 cursor-pointer transition-colors"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -382,7 +382,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             <img
               src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(displayName)}`}
               alt="Avatar"
-              className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 shrink-0"
+              className="w-8 h-8 rounded-full bg-[var(--muted)] border border-[var(--border)] shrink-0"
             />
             <div className="leading-tight text-left min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
@@ -400,7 +400,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             <button
               onClick={handleLogout}
               title="Sign out of shift"
-              className="p-1.5 rounded-lg text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors shrink-0"
+              className="p-1.5 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10 cursor-pointer transition-colors shrink-0"
             >
               <LogOut className="w-4 h-4" />
             </button>

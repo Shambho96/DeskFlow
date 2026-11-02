@@ -106,7 +106,7 @@ export const TeamManagementTab: React.FC = () => {
     return (
       <Card className="max-w-2xl mx-auto my-8 border-[var(--border)]">
         <CardContent className="p-8 text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] flex items-center justify-center mx-auto">
             <AlertCircle className="w-6 h-6" />
           </div>
           <h2 className="text-base font-bold text-[var(--foreground)]">Access Restricted</h2>
@@ -163,7 +163,7 @@ export const TeamManagementTab: React.FC = () => {
       </div>
 
       {actionError && (
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs">
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--destructive)]/10 border border-[var(--destructive)]/20 text-[var(--destructive)] text-xs">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{actionError}</span>
         </div>
@@ -237,8 +237,8 @@ export const TeamManagementTab: React.FC = () => {
             </div>
           ) : error ? (
             <div className="py-12 text-center space-y-2">
-              <AlertCircle className="w-6 h-6 text-red-500 mx-auto" />
-              <p className="text-xs font-semibold text-red-500">{error}</p>
+              <AlertCircle className="w-6 h-6 text-[var(--destructive)] mx-auto" />
+              <p className="text-xs font-semibold text-[var(--destructive)]">{error}</p>
               <Button size="sm" variant="outline" onClick={() => refetch()} className="text-xs">
                 Try Again
               </Button>
@@ -313,11 +313,11 @@ export const TeamManagementTab: React.FC = () => {
                         {/* Role & Access Badge */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
                           {member.role === 'OWNER' ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[10px] bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
                               <Crown className="w-3 h-3" /> Owner
                             </span>
                           ) : member.role === 'MANAGER' ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[10px] bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
                               <Shield className="w-3 h-3" /> Manager • Web Login
                             </span>
                           ) : (
@@ -350,13 +350,13 @@ export const TeamManagementTab: React.FC = () => {
                         {/* Status */}
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           {member.isActive ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-[10px] bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
                               Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-[10px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-[10px] bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted-foreground)]" />
                               Deactivated
                             </span>
                           )}
@@ -390,8 +390,8 @@ export const TeamManagementTab: React.FC = () => {
                                 onClick={() => handleToggle(member)}
                                 disabled={isToggling}
                                 className={`h-7 px-2.5 text-[11px] cursor-pointer transition-colors ${member.isActive
-                                    ? 'hover:text-red-600 hover:border-red-300 hover:bg-red-50/50 dark:hover:bg-red-950/20'
-                                    : 'hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20'
+                                    ? 'hover:text-[var(--destructive)] hover:border-[var(--destructive)]/30 hover:bg-[var(--destructive)]/10'
+                                    : 'hover:text-[var(--primary)] hover:border-[var(--primary)]/30 hover:bg-[var(--primary)]/10'
                                   }`}
                               >
                                 {isToggling ? (

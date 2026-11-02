@@ -48,25 +48,25 @@ export const RoomDetailDrawer: React.FC<RoomDetailDrawerProps> = ({
   > = {
     AVAILABLE: {
       label: 'Available',
-      badge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-      dot: 'bg-emerald-500',
+      badge: 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20',
+      dot: 'bg-[var(--primary)]',
       description: 'Room is clean, vacant, and ready for immediate guest check-in.',
     },
     OCCUPIED: {
       label: 'Occupied',
-      badge: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
-      dot: 'bg-blue-500',
+      badge: 'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)]',
+      dot: 'bg-[var(--foreground)]',
       description: 'Guest is currently checked in.',
     },
     CLEANING: {
       label: 'Cleaning',
-      badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-      dot: 'bg-amber-500',
+      badge: 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]',
+      dot: 'bg-[var(--muted-foreground)]',
       description: 'Housekeeping attention required before next guest arrival.',
     },
     MAINTENANCE: {
       label: 'Maintenance',
-      badge: 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/30',
+      badge: 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20',
       dot: 'bg-[var(--destructive)]',
       description: 'Room is out-of-order for repairs or maintenance inspection.',
     },

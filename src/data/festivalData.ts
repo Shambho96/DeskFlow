@@ -82,10 +82,10 @@ export async function fetchLivePublicHolidays(year: number = 2026, countryCode: 
                 const forecastOccupancy = isMajorFestival ? 98 : isLongWeekend ? 92 : 85;
 
                 const badgeColor = isMajorFestival
-                  ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30'
+                  ? 'bg-[var(--primary)]/15 text-[var(--primary)] border-[var(--primary)]/30'
                   : isLongWeekend
-                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                  : 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/30';
+                  ? 'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)]'
+                  : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
 
                 events.push({
                   id: `in-api-${isoDate}-${eventIdx++}`,
@@ -135,8 +135,8 @@ export async function fetchLivePublicHolidays(year: number = 2026, countryCode: 
       const forecastOccupancy = isLongWeekend ? 95 : 88;
 
       const badgeColor = isLongWeekend
-        ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30'
-        : 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30';
+        ? 'bg-[var(--primary)]/15 text-[var(--primary)] border-[var(--primary)]/30'
+        : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
 
       return {
         id: `api-${item.date}-${index}`,

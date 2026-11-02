@@ -80,7 +80,7 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
             {formattedDate}
           </span>
           <span className="text-[var(--border)] hidden md:inline">•</span>
-          <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          <Clock className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
           <span className="font-mono font-bold text-xs sm:text-sm text-[var(--foreground)] tabular-nums tracking-tight">
             {formattedTime}
           </span>
@@ -110,7 +110,7 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
           title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
         >
           {theme === 'dark' ? (
-            <Sun className="w-4 h-4 text-amber-400" />
+            <Sun className="w-4 h-4 text-[var(--primary)]" />
           ) : (
             <Moon className="w-4 h-4" />
           )}
