@@ -3,6 +3,7 @@ import { X, Sparkles, Trash2, Clock, Users, DollarSign, Plus } from 'lucide-reac
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
 import type { BackendBuilding, BackendFloor, BackendUtility } from '../../types/hotel';
 import type { UpdateUtilityInput } from '../../hooks/useRooms';
 
@@ -170,34 +171,35 @@ export const EditUtilityModal: React.FC<EditUtilityModalProps> = ({
                 <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">
                   Facility Type
                 </label>
-                <select
-                  value={utilityType}
-                  onChange={e => setUtilityType(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]"
-                  required
-                >
-                  {UTILITY_TYPES.map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
+                <Select value={utilityType} onValueChange={setUtilityType}>
+                  <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UTILITY_TYPES.map(t => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">
                   Live Facility Status
                 </label>
-                <select
-                  value={status}
-                  onChange={e => setStatus(e.target.value as any)}
-                  className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]"
-                >
-                  <option value="OPEN">🟢 OPEN (Active)</option>
-                  <option value="CLEANING">🟡 CLEANING (Turnaround)</option>
-                  <option value="MAINTENANCE">🔴 MAINTENANCE (Out of Order)</option>
-                  <option value="CLOSED">⚪ CLOSED</option>
-                </select>
+                <Select value={status} onValueChange={(val) => setStatus(val as any)}>
+                  <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]">
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="OPEN">🟢 OPEN (Active)</SelectItem>
+                    <SelectItem value="CLEANING">🟡 CLEANING (Turnaround)</SelectItem>
+                    <SelectItem value="MAINTENANCE">🔴 MAINTENANCE (Out of Order)</SelectItem>
+                    <SelectItem value="CLOSED">⚪ CLOSED</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -206,36 +208,40 @@ export const EditUtilityModal: React.FC<EditUtilityModalProps> = ({
                 <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">
                   Located in Building
                 </label>
-                <select
-                  value={buildingId}
-                  onChange={e => setBuildingId(Number(e.target.value))}
-                  className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]"
-                  required
+                <Select
+                  value={buildingId ? String(buildingId) : undefined}
+                  onValueChange={(val) => setBuildingId(Number(val))}
                 >
-                  {buildings.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]">
+                    <SelectValue placeholder="Select Building" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildings.map(b => (
+                      <SelectItem key={b.id} value={String(b.id)}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">
                   Floor Level
                 </label>
-                <select
-                  value={floorId}
-                  onChange={e => setFloorId(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]"
-                >
-                  <option value="NONE">Property Grounds / Open Level</option>
-                  {relevantFloors.map(f => (
-                    <option key={f.id} value={f.id}>
-                      Floor {f.floorNumber} — {f.name}
-                    </option>
-                  ))}
-                </select>
+                <Select value={floorId} onValueChange={setFloorId}>
+                  <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]">
+                    <SelectValue placeholder="Select Floor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Property Grounds / Open Level</SelectItem>
+                    {relevantFloors.map(f => (
+                      <SelectItem key={f.id} value={String(f.id)}>
+                        Floor {f.floorNumber} — {f.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

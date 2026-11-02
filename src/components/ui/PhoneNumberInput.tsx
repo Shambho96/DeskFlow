@@ -99,11 +99,11 @@ export function PhoneNumberInput({
                         <button
                             type="button"
                             aria-label={`Country code: ${selectedCountry.name} +${selectedCountry.callingCode}`}
-                            className="flex shrink-0 items-center gap-1.5 border-r border-[var(--border)] px-2.5 text-xs text-[var(--foreground)] hover:bg-[var(--muted)] focus-visible:outline-none"
+                            className="flex shrink-0 items-center gap-1 border-r border-[var(--border)] px-2 text-xs text-[var(--foreground)] hover:bg-[var(--muted)] focus-visible:outline-none"
                         >
                             <CountryFlag country={country} countryName={selectedCountry.name} />
-                            <span>+{selectedCountry.callingCode}</span>
-                            <ChevronDown className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
+                            <span className="font-mono text-xs">+{selectedCountry.callingCode}</span>
+                            <ChevronDown className="h-3 w-3 text-[var(--muted-foreground)]" />
                         </button>
                     </PopoverTrigger>
                     <PopoverContent align="start" sideOffset={6} className="w-[300px] p-2">
@@ -159,16 +159,16 @@ export function PhoneNumberInput({
                     placeholder={placeholder}
                     required={required}
                     aria-label="Phone number"
-                    className="min-w-0 flex-1 bg-transparent px-3 text-sm text-[var(--foreground)] outline-none"
+                    className="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-[var(--foreground)] outline-none"
                 />
                 {value && (
                     <span
-                        className={`flex shrink-0 items-center gap-1 px-2 text-[11px] font-medium ${isValid ? 'text-emerald-600' : 'text-rose-500'}`}
+                        className={`flex shrink-0 items-center px-2 text-xs font-medium ${isValid ? 'text-emerald-500' : 'text-[var(--destructive)]'}`}
                         role="status"
                         aria-live="polite"
+                        title={isValid ? 'Valid phone number' : 'Incomplete or invalid phone number'}
                     >
                         {isValid ? <CircleCheck className="h-4 w-4" /> : <CircleX className="h-4 w-4" />}
-                        <span className="hidden sm:inline">{isValid ? 'Valid' : 'Invalid'}</span>
                     </span>
                 )}
             </div>

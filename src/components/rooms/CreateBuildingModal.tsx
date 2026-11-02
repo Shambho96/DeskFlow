@@ -3,6 +3,7 @@ import { X, Building2, Layers } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
 import type { CreateBuildingInput } from '../../hooks/useRooms';
 
 interface CreateBuildingModalProps {
@@ -114,18 +115,18 @@ export const CreateBuildingModal: React.FC<CreateBuildingModalProps> = ({
                 <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">
                   Building Type *
                 </label>
-                <select
-                  value={buildingType}
-                  onChange={e => setBuildingType(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]"
-                  required
-                >
-                  {BUILDING_TYPES.map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
+                <Select value={buildingType} onValueChange={setBuildingType}>
+                  <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-2.5 text-xs font-bold text-[var(--foreground)]">
+                    <SelectValue placeholder="Select Building Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BUILDING_TYPES.map(t => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

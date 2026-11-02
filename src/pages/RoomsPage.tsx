@@ -27,6 +27,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
 import { Popover, PopoverTrigger, PopoverContent } from '../components/ui/Popover';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
 import { formatCurrency, cn } from '../lib/utils';
 import { CreateCategoryModal } from '../components/rooms/CreateCategoryModal';
 import { CreateRoomModal } from '../components/rooms/CreateRoomModal';
@@ -923,9 +924,9 @@ export const RoomsPage: React.FC = () => {
                   : backendRooms.filter(r => (activeBuildingId === 'ALL' || r.buildingId === activeBuildingId) && r.status === st).length;
 
                 let badgeColor = 'text-[var(--foreground)]';
-                if (st === 'AVAILABLE') badgeColor = 'text-emerald-600 dark:text-emerald-400';
-                if (st === 'OCCUPIED') badgeColor = 'text-blue-600 dark:text-blue-400';
-                if (st === 'CLEANING') badgeColor = 'text-amber-600 dark:text-amber-400';
+                if (st === 'AVAILABLE') badgeColor = 'text-[var(--primary)]';
+                if (st === 'OCCUPIED') badgeColor = 'text-[var(--foreground)]';
+                if (st === 'CLEANING') badgeColor = 'text-[var(--muted-foreground)]';
                 if (st === 'MAINTENANCE') badgeColor = 'text-[var(--destructive)]';
 
                 return (
@@ -992,17 +993,18 @@ export const RoomsPage: React.FC = () => {
               {activeFloorId !== 'ALL' && displayedFloors.length > 0 && (
                 <div className="flex items-center gap-1.5 bg-[var(--muted)]/50 px-2 py-0.5 rounded-xl border border-[var(--border)]">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Level:</span>
-                  <select
-                    value={activeFloorId}
-                    onChange={e => setActiveFloorId(e.target.value)}
-                    className="h-7 text-xs font-bold rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] px-2 cursor-pointer shadow-2xs"
-                  >
-                    {displayedFloors.map(f => (
-                      <option key={f.id} value={String(f.id)}>
-                        L{f.floorNumber} — {f.name} ({f.rooms?.length || 0} rms)
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={activeFloorId} onValueChange={setActiveFloorId}>
+                    <SelectTrigger className="h-7 text-xs font-bold rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] px-2 shadow-2xs w-auto min-w-[140px]">
+                      <SelectValue placeholder="Select Floor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {displayedFloors.map(f => (
+                        <SelectItem key={f.id} value={String(f.id)}>
+                          L{f.floorNumber} — {f.name} ({f.rooms?.length || 0} rms)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
@@ -1200,14 +1202,14 @@ export const RoomsPage: React.FC = () => {
                         >
                           <div className="flex items-center gap-2 text-[11px] text-[var(--muted-foreground)] flex-wrap">
                             <span className="font-bold text-[var(--foreground)]">Quick Breakdown:</span>
-                            <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
+                            <span className="px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] font-bold border border-[var(--primary)]/20">
                               {bAvailable} Available
                             </span>
-                            <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20">
+                            <span className="px-2 py-0.5 rounded-md bg-[var(--secondary)] text-[var(--secondary-foreground)] font-bold border border-[var(--border)]">
                               {bOccupied} Occupied
                             </span>
                             {bCleaning > 0 && (
-                              <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">
+                              <span className="px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-foreground)] font-bold border border-[var(--border)]">
                                 {bCleaning} Cleaning
                               </span>
                             )}
@@ -1363,16 +1365,16 @@ export const RoomsPage: React.FC = () => {
                                   return (
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
                                       {floorRoomsFiltered.map(room => {
-                                        let statusBg = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-                                        let statusDot = 'bg-emerald-500';
+                                        let statusBg = 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
+                                        let statusDot = 'bg-[var(--primary)]';
                                         if (room.status === 'OCCUPIED') {
-                                          statusBg = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30';
-                                          statusDot = 'bg-blue-500';
+                                          statusBg = 'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)]';
+                                          statusDot = 'bg-[var(--foreground)]';
                                         } else if (room.status === 'CLEANING') {
-                                          statusBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
-                                          statusDot = 'bg-amber-500';
+                                          statusBg = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
+                                          statusDot = 'bg-[var(--muted-foreground)]';
                                         } else if (room.status === 'MAINTENANCE') {
-                                          statusBg = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/30';
+                                          statusBg = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20';
                                           statusDot = 'bg-[var(--destructive)]';
                                         }
 
@@ -1409,7 +1411,7 @@ export const RoomsPage: React.FC = () => {
                                             {/* Category / Name */}
                                             <div className="my-1.5">
                                               {room.customName ? (
-                                                <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate flex items-center gap-1" title={room.customName}>
+                                                <div className="text-[11px] font-bold text-[var(--primary)] truncate flex items-center gap-1" title={room.customName}>
                                                   <Sparkles className="w-3 h-3 shrink-0" />
                                                   <span className="truncate">{room.customName}</span>
                                                 </div>
@@ -1468,32 +1470,33 @@ export const RoomsPage: React.FC = () => {
                 {/* Left: Active Floor Level Switcher & Live Stats */}
                 <div className="flex items-center gap-2 bg-[var(--card)]/95 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-[var(--border)] shadow-md text-xs pointer-events-auto">
                   <Layers className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                  <select
-                    value={activeFloorId}
-                    onChange={e => setActiveFloorId(e.target.value)}
-                    className="bg-transparent font-extrabold text-xs text-[var(--foreground)] cursor-pointer border-none outline-none pr-2"
-                  >
-                    {displayedFloors.map(f => (
-                      <option key={f.id} value={String(f.id)} className="bg-[var(--card)] text-[var(--foreground)]">
-                        Level {f.floorNumber}: {f.name} ({f.rooms?.length || 0} rooms)
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={activeFloorId} onValueChange={setActiveFloorId}>
+                    <SelectTrigger className="h-7 border-none bg-transparent shadow-none px-1 text-xs font-extrabold text-[var(--foreground)] w-auto min-w-[150px]">
+                      <SelectValue placeholder="Select Floor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {displayedFloors.map(f => (
+                        <SelectItem key={f.id} value={String(f.id)}>
+                          Level {f.floorNumber}: {f.name} ({f.rooms?.length || 0} rooms)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
                   <div className="h-4 w-px bg-[var(--border)]" />
 
                   <div className="flex items-center gap-2 text-[10px] font-bold">
-                    <span className="text-emerald-600 dark:text-emerald-400">
+                    <span className="text-[var(--primary)]">
                       {activeFloorRooms.filter(r => r.status === 'AVAILABLE').length} Vacant
                     </span>
                     <span>•</span>
-                    <span className="text-blue-600 dark:text-blue-400">
+                    <span className="text-[var(--foreground)]">
                       {activeFloorRooms.filter(r => r.status === 'OCCUPIED').length} Occupied
                     </span>
                     {activeFloorRooms.some(r => r.status === 'CLEANING' || r.status === 'MAINTENANCE') && (
                       <>
                         <span>•</span>
-                        <span className="text-amber-600 dark:text-amber-400">
+                        <span className="text-[var(--muted-foreground)]">
                           {activeFloorRooms.filter(r => r.status === 'CLEANING' || r.status === 'MAINTENANCE').length} Attention
                         </span>
                       </>
@@ -1543,13 +1546,13 @@ export const RoomsPage: React.FC = () => {
               {/* Bottom Left: Blueprint Status Legend & Tip */}
               <div className="absolute bottom-3 left-3 z-20 hidden sm:flex items-center gap-3 bg-[var(--card)]/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-[var(--border)] shadow-xs text-[10px] text-[var(--muted-foreground)] font-bold pointer-events-none">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> Available
+                  <span className="w-2 h-2 rounded-full bg-[var(--primary)]" /> Available
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" /> Occupied
+                  <span className="w-2 h-2 rounded-full bg-[var(--foreground)]" /> Occupied
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> Cleaning
+                  <span className="w-2 h-2 rounded-full bg-[var(--muted-foreground)]" /> Cleaning
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-[var(--destructive)]" /> Maintenance
@@ -1611,16 +1614,16 @@ export const RoomsPage: React.FC = () => {
                     const isSelected = selectedItemId === item.id;
                     const isDragging = draggingItemId === item.id;
 
-                    let statusBg = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20';
-                    let statusDot = 'bg-emerald-500';
+                    let statusBg = 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20 hover:bg-[var(--primary)]/15';
+                    let statusDot = 'bg-[var(--primary)]';
                     if (item.status === 'OCCUPIED') {
-                      statusBg = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/20';
-                      statusDot = 'bg-blue-500';
+                      statusBg = 'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)] hover:bg-[var(--muted)]';
+                      statusDot = 'bg-[var(--foreground)]';
                     } else if (item.status === 'CLEANING') {
-                      statusBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20';
-                      statusDot = 'bg-amber-500';
+                      statusBg = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)]/80';
+                      statusDot = 'bg-[var(--muted-foreground)]';
                     } else if (item.status === 'MAINTENANCE') {
-                      statusBg = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/30 hover:bg-[var(--destructive)]/20';
+                      statusBg = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20 hover:bg-[var(--destructive)]/15';
                       statusDot = 'bg-[var(--destructive)]';
                     }
 
@@ -1738,41 +1741,53 @@ export const RoomsPage: React.FC = () => {
               </div>
 
               {/* Building Filter */}
-              <select
-                value={directoryBuildingFilter}
-                onChange={e => setDirectoryBuildingFilter(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
-                className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]"
+              <Select
+                value={String(directoryBuildingFilter)}
+                onValueChange={val => setDirectoryBuildingFilter(val === 'ALL' ? 'ALL' : Number(val))}
               >
-                <option value="ALL">All Buildings ({buildings.length})</option>
-                {buildings.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
+                <SelectTrigger className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] w-auto min-w-[150px]">
+                  <SelectValue placeholder="All Buildings" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Buildings ({buildings.length})</SelectItem>
+                  {buildings.map(b => (
+                    <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               {/* Floor Filter */}
-              <select
+              <Select
                 value={directoryFloorFilter}
-                onChange={e => setDirectoryFloorFilter(e.target.value)}
-                className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]"
+                onValueChange={val => setDirectoryFloorFilter(val)}
               >
-                <option value="ALL">All Floors ({backendFloors.length})</option>
-                {backendFloors.map(f => (
-                  <option key={f.id} value={f.id}>Floor {f.floorNumber} — {f.name}</option>
-                ))}
-              </select>
+                <SelectTrigger className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] w-auto min-w-[140px]">
+                  <SelectValue placeholder="All Floors" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Floors ({backendFloors.length})</SelectItem>
+                  {backendFloors.map(f => (
+                    <SelectItem key={f.id} value={String(f.id)}>Floor {f.floorNumber} — {f.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               {/* Status Filter */}
-              <select
+              <Select
                 value={directoryStatusFilter}
-                onChange={e => setDirectoryStatusFilter(e.target.value)}
-                className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]"
+                onValueChange={val => setDirectoryStatusFilter(val)}
               >
-                <option value="ALL">All Statuses</option>
-                <option value="AVAILABLE">🟢 Available</option>
-                <option value="OCCUPIED">🔵 Occupied</option>
-                <option value="CLEANING">🟡 Cleaning</option>
-                <option value="MAINTENANCE">🔴 Maintenance</option>
-              </select>
+                <SelectTrigger className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] w-auto min-w-[130px]">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Statuses</SelectItem>
+                  <SelectItem value="AVAILABLE">🟢 Available</SelectItem>
+                  <SelectItem value="OCCUPIED">🔵 Occupied</SelectItem>
+                  <SelectItem value="CLEANING">🟡 Cleaning</SelectItem>
+                  <SelectItem value="MAINTENANCE">🔴 Maintenance</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <span className="text-xs font-bold text-[var(--muted-foreground)] whitespace-nowrap">
@@ -1804,10 +1819,10 @@ export const RoomsPage: React.FC = () => {
                     </tr>
                   ) : (
                     filteredDirectoryRooms.map(rm => {
-                      let statusBadge = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-                      if (rm.status === 'OCCUPIED') statusBadge = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30';
-                      else if (rm.status === 'CLEANING') statusBadge = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
-                      else if (rm.status === 'MAINTENANCE') statusBadge = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/30';
+                      let statusBadge = 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
+                      if (rm.status === 'OCCUPIED') statusBadge = 'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)]';
+                      else if (rm.status === 'CLEANING') statusBadge = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
+                      else if (rm.status === 'MAINTENANCE') statusBadge = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20';
 
                       return (
                         <tr key={rm.id} className="hover:bg-[var(--muted)]/30 transition-colors">
@@ -1823,8 +1838,8 @@ export const RoomsPage: React.FC = () => {
                           <td className="py-3 px-4 text-xs">
                             {rm.customName ? (
                               <div>
-                                <span className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                                  <Sparkles className="w-3 h-3 text-amber-500" /> {rm.customName}
+                                <span className="font-bold text-[var(--primary)] flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3 text-[var(--primary)]" /> {rm.customName}
                                 </span>
                                 <span className="text-[10px] text-[var(--muted-foreground)]">Free-Hand Custom</span>
                               </div>
@@ -1855,19 +1870,25 @@ export const RoomsPage: React.FC = () => {
                             </div>
                           </td>
                           <td className="py-3 px-4 text-xs">
-                            <select
+                            <Select
                               value={rm.status}
-                              onChange={e => handleUpdateStatus(rm.id, e.target.value as LiveRoomStatus)}
-                              className={cn(
-                                'px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border cursor-pointer',
-                                statusBadge
-                              )}
+                              onValueChange={val => handleUpdateStatus(rm.id, val as LiveRoomStatus)}
                             >
-                              <option value="AVAILABLE">AVAILABLE</option>
-                              <option value="OCCUPIED">OCCUPIED</option>
-                              <option value="CLEANING">CLEANING</option>
-                              <option value="MAINTENANCE">MAINTENANCE</option>
-                            </select>
+                              <SelectTrigger
+                                className={cn(
+                                  'h-7 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border cursor-pointer w-auto min-w-[110px]',
+                                  statusBadge
+                                )}
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="AVAILABLE">AVAILABLE</SelectItem>
+                                <SelectItem value="OCCUPIED">OCCUPIED</SelectItem>
+                                <SelectItem value="CLEANING">CLEANING</SelectItem>
+                                <SelectItem value="MAINTENANCE">MAINTENANCE</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </td>
                           <td className="py-3 px-4 text-xs text-right">
                             <div className="flex items-center justify-end gap-1.5">
@@ -2039,10 +2060,10 @@ export const RoomsPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {backendUtilities.map(u => {
-                let statusBadge = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-                if (u.status === 'CLEANING') statusBadge = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
-                else if (u.status === 'MAINTENANCE') statusBadge = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/30';
-                else if (u.status === 'CLOSED') statusBadge = 'bg-gray-500/10 text-gray-500 border-gray-500/30';
+                let statusBadge = 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
+                if (u.status === 'CLEANING') statusBadge = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
+                else if (u.status === 'MAINTENANCE') statusBadge = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20';
+                else if (u.status === 'CLOSED') statusBadge = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
 
                 return (
                   <div
@@ -2064,19 +2085,25 @@ export const RoomsPage: React.FC = () => {
                         </div>
 
                         {/* Quick Live Status Toggle */}
-                        <select
+                        <Select
                           value={u.status}
-                          onChange={e => apiUpdateUtilityStatus(u.id, e.target.value as any)}
-                          className={cn(
-                            'px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border cursor-pointer',
-                            statusBadge
-                          )}
+                          onValueChange={(val) => apiUpdateUtilityStatus(u.id, val as any)}
                         >
-                          <option value="OPEN">🟢 OPEN</option>
-                          <option value="CLEANING">🟡 CLEANING</option>
-                          <option value="MAINTENANCE">🔴 MAINTENANCE</option>
-                          <option value="CLOSED">⚪ CLOSED</option>
-                        </select>
+                          <SelectTrigger
+                            className={cn(
+                              'h-7 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border cursor-pointer w-auto shadow-none',
+                              statusBadge
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="OPEN">🟢 OPEN</SelectItem>
+                            <SelectItem value="CLEANING">🟡 CLEANING</SelectItem>
+                            <SelectItem value="MAINTENANCE">🔴 MAINTENANCE</SelectItem>
+                            <SelectItem value="CLOSED">⚪ CLOSED</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       {/* Info items */}
@@ -2160,36 +2187,36 @@ export const RoomsPage: React.FC = () => {
                   <label className="block font-bold text-[var(--muted-foreground)] mb-1">
                     Target Floor *
                   </label>
-                  <select
-                    value={genFloorId}
-                    onChange={e => setGenFloorId(e.target.value)}
-                    className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]"
-                    required
-                  >
-                    {backendFloors.map(f => (
-                      <option key={f.id} value={f.id}>
-                        Floor {f.floorNumber} — {f.name} {f.buildingName ? `(${f.buildingName})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={genFloorId} onValueChange={setGenFloorId}>
+                    <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]">
+                      <SelectValue placeholder="Select Floor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {backendFloors.map(f => (
+                        <SelectItem key={f.id} value={String(f.id)}>
+                          Floor {f.floorNumber} — {f.name} {f.buildingName ? `(${f.buildingName})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block font-bold text-[var(--muted-foreground)] mb-1">
                     Room Category &amp; Pricing *
                   </label>
-                  <select
-                    value={genCategoryId}
-                    onChange={e => setGenCategoryId(e.target.value)}
-                    className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]"
-                    required
-                  >
-                    {backendCategories.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.code ? `(${c.code})` : ''} — {formatCurrency(c.basePrice)}/night
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={genCategoryId} onValueChange={setGenCategoryId}>
+                    <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {backendCategories.map(c => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.name} {c.code ? `(${c.code})` : ''} — {formatCurrency(c.basePrice)}/night
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

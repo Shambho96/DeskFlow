@@ -32,7 +32,20 @@ export function useOutlets(enabled = true) {
   };
 }
 
-/** Returns the display label for a single outlet: "Name — City" */
+/** Returns the display label for a single outlet, avoiding duplicate city/name repetition */
 export function outletLabel(o: OutletInfo): string {
-  return `${o.name} — ${o.city}`;
+  if (!o.name) return '';
+  if (!o.city || !o.city.trim()) {
+    return o.name;
+  }
+  const cleanCity = o.city.trim();
+  const lowerName = o.name.toLowerCase();
+  const lowerCity = cleanCity.toLowerCase();
+
+  // If the outlet name already contains the city, avoid repeating it:
+  // e.g. "Taj - Kolhapur" with city "Kolhapur" -> "Taj - Kolhapur"
+  if (lowerName.includes(lowerCity)) {
+    return o.name;
+  }
+  return `${o.name} — ${cleanCity}`;
 }

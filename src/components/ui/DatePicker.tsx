@@ -10,12 +10,29 @@ interface DatePickerProps {
   className?: string;
 }
 
+const parseIsoDate = (isoStr: string) => {
+  if (!isoStr) return new Date(2026, 8, 24);
+  const parts = isoStr.split('-').map(Number);
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  return new Date(2026, 8, 24);
+};
+
 export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className }) => {
   const [open, setOpen] = useState(false);
 
-  // Parse input date YYYY-MM-DD
-  const selectedDate = new Date(value || '2026-09-24');
-  const [viewDate, setViewDate] = useState(new Date(selectedDate));
+  // Timezone-safe date representation
+  const selectedDate = parseIsoDate(value);
+  const [viewDate, setViewDate] = useState(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+
+  // Sync viewDate when value or open changes
+  React.useEffect(() => {
+    if (value) {
+      const d = parseIsoDate(value);
+      setViewDate(new Date(d.getFullYear(), d.getMonth(), 1));
+    }
+  }, [value, open]);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();

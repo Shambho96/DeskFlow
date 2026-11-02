@@ -4,7 +4,6 @@ import { ThemeProvider } from './context/ThemeContext';
 import { HotelProvider } from './context/HotelContext';
 import { ModalProvider } from './context/ModalContext';
 
-import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { PublicBookingPage } from './pages/PublicBookingPage';
 import { AppShell } from './layouts/AppShell';
@@ -22,8 +21,8 @@ export const App: React.FC = () => {
         <ModalProvider>
           <BrowserRouter>
             <Routes>
-              {/* Public Marketing Landing Page & Public Booking */}
-              <Route path="/" element={<LandingPage />} />
+              {/* Root redirects directly to dashboard (which redirects to /login if unauthenticated) */}
+              <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/book" element={<PublicBookingPage />} />
               <Route path="/book/:hotelId" element={<PublicBookingPage />} />
@@ -39,7 +38,7 @@ export const App: React.FC = () => {
               </Route>
 
               {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
             </Routes>
           </BrowserRouter>
         </ModalProvider>

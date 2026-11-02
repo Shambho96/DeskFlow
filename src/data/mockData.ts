@@ -124,8 +124,10 @@ export const MOCK_RESERVATIONS: Reservation[] = [
     status: "RESERVED",
     totalAmount: 22500,
     paidAmount: 5000,
-    source: "MakeMyTrip",
-    idVerified: false,
+    source: "DIRECT",
+    idVerified: true,
+    idType: "Aadhaar",
+    idNumber: "4521-8890-1123",
     adults: 2,
     children: 0,
     specialRequests: ["High Floor", "Airport Transfer"]
@@ -143,11 +145,13 @@ export const MOCK_RESERVATIONS: Reservation[] = [
     status: "CANCELLED",
     totalAmount: 2900,
     paidAmount: 0,
-    source: "Booking.com",
-    idVerified: false,
+    source: "WHATSAPP",
+    idVerified: true,
+    idType: "Passport",
+    idNumber: "Z9810293",
     adults: 2,
     children: 0,
-    specialRequests: []
+    specialRequests: ["Late Arrival", "Extra Towels"]
   }
 ];
 

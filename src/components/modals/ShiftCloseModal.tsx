@@ -46,18 +46,18 @@ export const ShiftCloseModal: React.FC = () => {
           <div className="p-4 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-2.5">
             <div className="flex justify-between items-center">
               <span className="text-[var(--muted-foreground)]">Starting Opening Float:</span>
-              <span className="font-mono font-bold">{formatCurrency(cashRegister.startingFloat)}</span>
+              <span className="font-mono font-bold text-[var(--foreground)]">{formatCurrency(cashRegister.startingFloat)}</span>
             </div>
-            <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400">
-              <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5" /> Cash Collected:</span>
+            <div className="flex justify-between items-center text-[var(--foreground)]">
+              <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5 text-[var(--primary)]" /> Cash Collected:</span>
               <span className="font-mono font-bold">+ {formatCurrency(cashRegister.cashCollected)}</span>
             </div>
-            <div className="flex justify-between items-center text-blue-600 dark:text-blue-400">
-              <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5" /> Card Terminals:</span>
+            <div className="flex justify-between items-center text-[var(--foreground)]">
+              <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5 text-[var(--muted-foreground)]" /> Card Terminals:</span>
               <span className="font-mono font-bold">{formatCurrency(cashRegister.cardSettled)}</span>
             </div>
-            <div className="flex justify-between items-center text-purple-600 dark:text-purple-400">
-              <span className="flex items-center gap-1"><QrCode className="w-3.5 h-3.5" /> UPI QR Receipts:</span>
+            <div className="flex justify-between items-center text-[var(--foreground)]">
+              <span className="flex items-center gap-1"><QrCode className="w-3.5 h-3.5 text-[var(--muted-foreground)]" /> UPI QR Receipts:</span>
               <span className="font-mono font-bold">{formatCurrency(cashRegister.upiCollected)}</span>
             </div>
 
@@ -94,9 +94,9 @@ export const ShiftCloseModal: React.FC = () => {
         </div>
 
         <div className="p-4 bg-[var(--muted)] border-t border-[var(--border)] flex justify-between items-center gap-3">
-          {/* Inline success banner — no alert() */}
+          {/* Inline success banner */}
           {closed ? (
-            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold text-xs">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--primary)]/15 border border-[var(--primary)]/30 text-[var(--primary)] font-semibold text-xs">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               Shift Closed for {cashRegister.activeReceptionist}! Closing...
             </div>
@@ -123,7 +123,7 @@ export const ShiftCloseModal: React.FC = () => {
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold gap-1.5 shadow-md"
+                  className="bg-[var(--destructive)] hover:opacity-90 text-[var(--destructive-foreground)] font-bold gap-1.5 shadow-md"
                   onClick={handleCloseShift}
                 >
                   <CheckCircle2 className="w-4 h-4" /> Lock & Close Shift

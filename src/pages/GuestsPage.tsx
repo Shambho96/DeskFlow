@@ -56,10 +56,10 @@ export const GuestsPage: React.FC = () => {
   // Tier calculation helper
   const getGuestTier = (res: Reservation) => {
     const total = res.totalAmount || 0;
-    if (total >= 50000) return { id: 'PLATINUM', name: 'Platinum', color: 'text-cyan-400 bg-cyan-500/15 border-cyan-500/30', badge: '💎 PLATINUM' };
-    if (total >= 25000) return { id: 'GOLD', name: 'Gold', color: 'text-amber-400 bg-amber-500/15 border-amber-500/30', badge: '🥇 GOLD' };
-    if (total >= 10000) return { id: 'SILVER', name: 'Silver', color: 'text-slate-300 bg-slate-500/15 border-slate-500/30', badge: '🥈 SILVER' };
-    return { id: 'BRONZE', name: 'Bronze', color: 'text-orange-400 bg-orange-500/15 border-orange-500/30', badge: '🏅 BRONZE' };
+    if (total >= 50000) return { id: 'PLATINUM', name: 'Platinum', color: 'text-[var(--primary)] bg-[var(--primary)]/15 border-[var(--primary)]/30', badge: '💎 PLATINUM' };
+    if (total >= 25000) return { id: 'GOLD', name: 'Gold', color: 'text-[var(--primary)] bg-[var(--primary)]/10 border-[var(--primary)]/20', badge: '🥇 GOLD' };
+    if (total >= 10000) return { id: 'SILVER', name: 'Silver', color: 'text-[var(--foreground)] bg-[var(--muted)] border-[var(--border)]', badge: '🥈 SILVER' };
+    return { id: 'BRONZE', name: 'Bronze', color: 'text-[var(--muted-foreground)] bg-[var(--muted)]/60 border-[var(--border)]', badge: '🏅 BRONZE' };
   };
 
   // Filtered guest list
@@ -256,7 +256,7 @@ export const GuestsPage: React.FC = () => {
                         <img
                           src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(res.guestName)}`}
                           alt={res.guestName}
-                          className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 shrink-0 object-cover"
+                          className="w-10 h-10 rounded-full bg-[var(--muted)] border border-[var(--border)] shrink-0 object-cover"
                         />
                         <div className="min-w-0 leading-tight">
                           <p className="font-extrabold text-sm text-[var(--foreground)] truncate">
@@ -293,11 +293,11 @@ export const GuestsPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border)] pb-6">
                   <div className="flex items-center gap-4">
                     {/* Big Avatar Card with Primary Theme Border */}
-                    <div className="w-16 h-16 rounded-2xl p-0.5 bg-gradient-to-tr from-[var(--primary)] via-blue-500 to-indigo-600 shadow-md shrink-0">
+                    <div className="w-16 h-16 rounded-2xl p-0.5 border-2 border-[var(--primary)] shadow-md shrink-0">
                       <img
                         src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(selectedGuest.guestName)}`}
                         alt={selectedGuest.guestName}
-                        className="w-full h-full rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 object-cover"
+                        className="w-full h-full rounded-2xl bg-[var(--muted)] object-cover"
                       />
                     </div>
 
@@ -312,10 +312,10 @@ export const GuestsPage: React.FC = () => {
                         {selectedGuest.tags && selectedGuest.tags.length > 0 && selectedGuest.tags.map(tag => (
                           <span key={tag} className={cn(
                             "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border",
-                            tag.toLowerCase() === 'vip' ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" :
-                              tag.toLowerCase() === 'returning' ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" :
-                                tag.toLowerCase() === 'late check-out' ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" :
-                                  tag.toLowerCase() === 'allergic' ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" :
+                            tag.toLowerCase() === 'vip' ? "bg-[var(--primary)]/15 text-[var(--primary)] border-[var(--primary)]/30" :
+                              tag.toLowerCase() === 'returning' ? "bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)]" :
+                                tag.toLowerCase() === 'late check-out' ? "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]" :
+                                  tag.toLowerCase() === 'allergic' ? "bg-[var(--destructive)]/15 text-[var(--destructive)] border-[var(--destructive)]/30" :
                                     "bg-[var(--muted)] text-[var(--foreground)] border-[var(--border)]"
                           )}>
                             {tag}
@@ -341,7 +341,7 @@ export const GuestsPage: React.FC = () => {
                       onClick={() => setSelectedGuestId(null)}
                       className="h-9 rounded-xl border-[var(--border)] text-xs font-bold gap-1 hover:bg-[var(--muted)]"
                     >
-                      <X className="w-4 h-4 text-emerald-500" />
+                      <X className="w-4 h-4 text-[var(--muted-foreground)]" />
                       <span className="hidden sm:inline">Close</span>
                     </Button>
 
@@ -356,20 +356,20 @@ export const GuestsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 4 STAT CARDS ROW (EXACT MATCHING SCREENSHOT) */}
+                {/* 4 STAT CARDS ROW */}
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   {/* Card 1: TIER */}
                   <Card className="border-[var(--border)] bg-[var(--background)]/80 p-4 rounded-2xl space-y-3 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <div className="w-8 h-8 rounded-xl bg-orange-500/15 text-orange-500 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-[var(--primary)]/15 text-[var(--primary)] flex items-center justify-center">
                         <Award className="w-4 h-4" />
                       </div>
                     </div>
                     <div>
                       <span className="text-[10px] font-black uppercase tracking-wider text-[var(--muted-foreground)] block">TIER</span>
-                      <span className="text-lg font-black text-orange-500 block mt-0.5">{getGuestTier(selectedGuest).name}</span>
-                      <span className="text-[10px] text-[var(--muted-foreground)] mt-1 block cursor-pointer hover:text-pink-500 font-semibold">
-                        Click to configure tier →
+                      <span className="text-lg font-black text-[var(--primary)] block mt-0.5">{getGuestTier(selectedGuest).name}</span>
+                      <span className="text-[10px] text-[var(--muted-foreground)] mt-1 block font-semibold">
+                        Configured tier
                       </span>
                     </div>
                   </Card>
@@ -377,7 +377,7 @@ export const GuestsPage: React.FC = () => {
                   {/* Card 2: RESERVATIONS */}
                   <Card className="border-[var(--border)] bg-[var(--background)]/80 p-4 rounded-2xl space-y-3 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-500 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-[var(--muted)] text-[var(--foreground)] flex items-center justify-center">
                         <CalendarDays className="w-4 h-4" />
                       </div>
                     </div>
@@ -392,13 +392,13 @@ export const GuestsPage: React.FC = () => {
                   {/* Card 3: LIFETIME SPEND */}
                   <Card className="border-[var(--border)] bg-[var(--background)]/80 p-4 rounded-2xl space-y-3 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-[var(--primary)]/15 text-[var(--primary)] flex items-center justify-center">
                         <CreditCard className="w-4 h-4" />
                       </div>
                     </div>
                     <div>
                       <span className="text-[10px] font-black uppercase tracking-wider text-[var(--muted-foreground)] block">LIFETIME SPEND</span>
-                      <span className="text-xl font-mono font-black text-emerald-500 block mt-0.5">
+                      <span className="text-xl font-mono font-black text-[var(--foreground)] block mt-0.5">
                         {formatCurrency(guestHistory.reduce((sum, h) => sum + (h.totalAmount || 0), 0))}
                       </span>
                     </div>
@@ -407,7 +407,7 @@ export const GuestsPage: React.FC = () => {
                   {/* Card 4: LAST VISIT */}
                   <Card className="border-[var(--border)] bg-[var(--background)]/80 p-4 rounded-2xl space-y-3 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-[var(--muted)] text-[var(--muted-foreground)] flex items-center justify-center">
                         <Clock className="w-4 h-4" />
                       </div>
                     </div>
@@ -447,7 +447,7 @@ export const GuestsPage: React.FC = () => {
                     {guestHistory.map(history => (
                       <div
                         key={history.id}
-                        className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--card)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-pink-500/30 transition-all shadow-2xs"
+                        className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--card)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[var(--primary)]/40 transition-all shadow-2xs"
                       >
                         <div className="flex items-center gap-3">
                           <div className="text-xs font-mono font-bold text-[var(--foreground)]">
@@ -466,7 +466,7 @@ export const GuestsPage: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-4 self-end sm:self-auto">
-                          <span className="text-xs font-mono font-black text-emerald-500">
+                          <span className="text-xs font-mono font-black text-[var(--foreground)]">
                             {formatCurrency(history.totalAmount)}
                           </span>
 
@@ -516,15 +516,15 @@ export const GuestsPage: React.FC = () => {
                       <img
                         src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(res.guestName)}`}
                         alt={res.guestName}
-                        className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-200 shrink-0 object-cover"
+                        className="w-10 h-10 rounded-full bg-[var(--muted)] border border-[var(--border)] shrink-0 object-cover"
                       />
                       <div className="min-w-0">
                         <CardTitle className="text-sm font-bold flex items-center gap-1.5 truncate text-[var(--foreground)]">
                           <span className="truncate">{res.guestName}</span>
                           {res.idVerified ? (
-                            <span title="KYC ID Verified"><ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" /></span>
+                            <span title="KYC ID Verified"><ShieldCheck className="w-4 h-4 text-[var(--primary)] shrink-0" /></span>
                           ) : (
-                            <span title="Unverified Document"><ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" /></span>
+                            <span title="Unverified Document"><ShieldAlert className="w-4 h-4 text-[var(--muted-foreground)] shrink-0" /></span>
                           )}
                         </CardTitle>
                         <p className="text-[10px] text-[var(--muted-foreground)] font-mono truncate">Source: {res.source} · #{res.id}</p>
@@ -536,8 +536,8 @@ export const GuestsPage: React.FC = () => {
                         {res.status === 'CHECKED_IN' ? 'In-House' : res.status}
                       </Badge>
                       {isVip && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1">
-                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" /> VIP
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[var(--primary)]/15 text-[var(--primary)] border border-[var(--primary)]/30 flex items-center gap-1">
+                          <Star className="w-2.5 h-2.5 fill-[var(--primary)] text-[var(--primary)]" /> VIP
                         </span>
                       )}
                     </div>
@@ -594,12 +594,12 @@ export const GuestsPage: React.FC = () => {
                           <img
                             src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(res.guestName)}`}
                             alt={res.guestName}
-                            className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-200 shrink-0 object-cover"
+                            className="w-8 h-8 rounded-full bg-[var(--muted)] border border-[var(--border)] shrink-0 object-cover"
                           />
                           <div>
                             <div className="font-bold text-sm text-[var(--foreground)] flex items-center gap-1.5">
                               {res.guestName}
-                              {isVip && <span title="VIP Guest"><Star className="w-3 h-3 fill-amber-400 text-amber-400" /></span>}
+                              {isVip && <span title="VIP Guest"><Star className="w-3 h-3 fill-[var(--primary)] text-[var(--primary)]" /></span>}
                             </div>
                             <div className="text-[10px] text-[var(--muted-foreground)] font-mono">Ref: #{res.id} · {res.source}</div>
                           </div>
@@ -625,12 +625,12 @@ export const GuestsPage: React.FC = () => {
 
                       <td className="py-3 px-4 text-center font-mono">
                         <div className="flex items-center justify-center gap-1 text-[11px] text-[var(--foreground)] font-semibold">
-                          {res.idVerified ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> : <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />}
+                          {res.idVerified ? <ShieldCheck className="w-3.5 h-3.5 text-[var(--primary)]" /> : <ShieldAlert className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />}
                           <span>{res.idType || 'Passport'}: {res.idNumber || 'N/A'}</span>
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                      <td className="py-3 px-4 text-right font-mono font-bold text-[var(--foreground)] text-xs">
                         {formatCurrency(res.totalAmount)}
                       </td>
 
@@ -686,7 +686,7 @@ export const GuestsPage: React.FC = () => {
                       required
                       className="[&>div]:h-12 [&_button]:px-4 [&_input]:text-base"
                     />
-                    {newGuestPhoneError && <p className="mt-1 text-[10px] font-semibold text-rose-500">{newGuestPhoneError}</p>}
+                    {newGuestPhoneError && <p className="mt-1 text-[10px] font-semibold text-[var(--destructive)]">{newGuestPhoneError}</p>}
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-[var(--muted-foreground)] mb-1">Email Address</label>

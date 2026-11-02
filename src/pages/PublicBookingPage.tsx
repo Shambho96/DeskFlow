@@ -350,7 +350,7 @@ export const PublicBookingPage: React.FC = () => {
                         onChange={e => setGuestName(e.target.value)}
                         className="w-full h-12 px-4 rounded-xl bg-[var(--background)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] placeholder-[var(--muted-foreground)] outline-none focus:ring-2 focus:ring-[var(--primary)] transition-colors"
                       />
-                      {errors.guestName && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.guestName}</p>}
+                      {errors.guestName && <p className="text-[10px] text-[var(--destructive)] mt-1 font-semibold">{errors.guestName}</p>}
                     </div>
 
                     <div>
@@ -366,7 +366,7 @@ export const PublicBookingPage: React.FC = () => {
                         placeholder="98765 43210"
                         required
                       />
-                      {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-semibold">{errors.phone}</p>}
+                      {errors.phone && <p className="text-[10px] text-[var(--destructive)] mt-1 font-semibold">{errors.phone}</p>}
                     </div>
 
                     <div>
@@ -440,7 +440,7 @@ export const PublicBookingPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-2 text-[11px] text-[var(--muted-foreground)] p-3 rounded-xl bg-[var(--background)] border border-[var(--border)]">
-                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <ShieldCheck className="w-4 h-4 text-[var(--primary)] shrink-0" />
                       <span>Instant confirmation directly registered with front desk.</span>
                     </div>
                   </div>
@@ -455,12 +455,12 @@ export const PublicBookingPage: React.FC = () => {
                 transition={{ duration: 0.3 }}
                 className="space-y-5 text-center py-4"
               >
-                <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/40 flex items-center justify-center mx-auto shadow-xl">
+                <div className="w-14 h-14 rounded-full bg-[var(--primary)]/15 text-[var(--primary)] border border-[var(--primary)]/30 flex items-center justify-center mx-auto shadow-xl">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
 
                 <div className="space-y-1">
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-[10px] font-extrabold uppercase tracking-wider">
+                  <span className="px-3 py-1 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-[10px] font-extrabold uppercase tracking-wider">
                     Booking Confirmed
                   </span>
                   <h2 className="text-xl font-extrabold text-[var(--foreground)] pt-2">
@@ -483,7 +483,7 @@ export const PublicBookingPage: React.FC = () => {
                       onClick={handleCopyCode}
                       className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--muted)] hover:bg-[var(--accent)] text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5 transition-all cursor-pointer"
                     >
-                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? <Check className="w-3.5 h-3.5 text-[var(--primary)]" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copied ? 'Copied' : 'Copy'}</span>
                     </button>
                   </div>
@@ -516,7 +516,7 @@ export const PublicBookingPage: React.FC = () => {
 
                     <div>
                       <p className="text-[10px] text-[var(--muted-foreground)]">Total Amount</p>
-                      <p className="font-bold text-emerald-500 font-mono text-sm">${confirmedBooking.totalAmount}</p>
+                      <p className="font-bold text-[var(--primary)] font-mono text-sm">${confirmedBooking.totalAmount}</p>
                     </div>
                   </div>
                 </div>
