@@ -172,7 +172,7 @@ export const FolioModal: React.FC = () => {
                 <Building2 className="w-5 h-5 text-[var(--primary)]" />
               </div>
               <div>
-                <p className="font-bold text-sm text-[var(--foreground)]">DeskFlow Grand Azure Resort</p>
+                <p className="font-bold text-sm text-[var(--foreground)]">DeskFloow Grand Azure Resort</p>
                 <p className="text-[var(--muted-foreground)]">GSTIN: 29AAAAA0000A1Z5</p>
                 <p className="text-[var(--muted-foreground)]">Direct Channel: {bookingSource}</p>
               </div>

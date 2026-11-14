@@ -6,7 +6,6 @@ import { NewReservationModal } from '../components/modals/NewReservationModal';
 import { FolioModal } from '../components/modals/FolioModal';
 import { FastSearchModal } from '../components/modals/FastSearchModal';
 import { ShiftCloseModal } from '../components/modals/ShiftCloseModal';
-import { OutletSwitchOverlay } from '../components/ui/OutletSwitchOverlay';
 import { cn } from '../lib/utils';
 import { useUser } from '../hooks/useUser';
 
@@ -44,13 +43,13 @@ export const AppShell: React.FC = () => {
         <div className="flex flex-col items-center gap-3 animate-in fade-in duration-300">
           <div className="w-16 h-16 flex items-center justify-center drop-shadow-md animate-pulse">
             <img
-              src="/deskflow-logo.png"
-              alt="DeskFlow Logo"
+              src="/deskfloow-logo.png"
+              alt="DeskFloow Logo"
               className="w-full h-full object-contain select-none"
             />
           </div>
           <span className="font-extrabold text-base tracking-tight text-[var(--foreground)]">
-            Desk<span className="text-[var(--primary)] font-black">Flow</span>
+            Desk<span className="text-[var(--primary)] font-black">Floow</span>
           </span>
           <div className="w-24 h-1.5 bg-[var(--muted)] rounded-full overflow-hidden mt-1">
             <div className="w-1/2 h-full bg-[var(--primary)] rounded-full animate-[pulse_1s_ease-in-out_infinite]" />
@@ -113,7 +112,6 @@ export const AppShell: React.FC = () => {
       <FolioModal />
       <FastSearchModal />
       <ShiftCloseModal />
-      <OutletSwitchOverlay />
     </div>
   );
 };

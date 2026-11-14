@@ -1,4 +1,4 @@
-# DeskFlow Backend Master Execution Plan
+# DeskFloow Backend Master Execution Plan
 
 **Target Root Directory:** `D:\HRM\HRM-backend`  
 **Architecture:** Modular Monolith + Service Layer Pattern  

@@ -24,7 +24,7 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
   const { openSearch } = useModal();
   const location = useLocation();
 
-  const pageTitle = PAGE_TITLES[location.pathname] ?? 'DeskFlow';
+  const pageTitle = PAGE_TITLES[location.pathname] ?? 'DeskFloow';
 
   // Live ticking clock
   const [now, setNow] = useState<Date>(new Date());

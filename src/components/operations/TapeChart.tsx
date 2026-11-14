@@ -6,6 +6,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { TapeChartSkeleton } from '../skeletons';
 import { cn } from '../../lib/utils';
 import type { OperationsTapeChartPayload, ReservationRecord, OperationsBoardRoom } from '../../types/operations';
 
@@ -34,10 +35,14 @@ export const TapeChart: React.FC<TapeChartProps> = ({
   onDateChange,
   onSelectSlot,
   onOpenFolio,
-  isLoading: _isLoading
+  isLoading
 }) => {
   const rooms = tapeChart?.rooms || [];
   const reservations = tapeChart?.reservations || [];
+
+  if (isLoading && rooms.length === 0) {
+    return <TapeChartSkeleton />;
+  }
 
   // Generate 7 consecutive days starting from selectedDate
   const days = useMemo(() => {

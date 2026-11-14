@@ -170,10 +170,10 @@ export const PublicBookingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans antialiased flex items-center justify-center p-3 sm:p-6 selection:bg-[var(--primary)] selection:text-[var(--primary-foreground)]">
-      {/* Background ambient lighting using DeskFlow primary theme token */}
+      {/* Background ambient lighting using DeskFloow primary theme token */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-[var(--primary)]/10 blur-[140px] pointer-events-none -z-10" />
 
-      {/* CENTERED CARD CONTAINER (Reference Layout using DeskFlow Theme Tokens) */}
+      {/* CENTERED CARD CONTAINER (Reference Layout using DeskFloow Theme Tokens) */}
       <div className="w-full max-w-[480px] bg-[var(--card)] border border-[var(--border)] rounded-3xl shadow-2xl overflow-hidden flex flex-col min-h-[640px] relative">
 
         {/* TOP HEADER */}
@@ -209,9 +209,9 @@ export const PublicBookingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Right: DeskFlow Brand logo badge */}
+            {/* Right: DeskFloow Brand logo badge */}
             <div className="w-12 h-12 flex items-center justify-center shrink-0 drop-shadow-md">
-              <img src="/deskflow-logo.png" alt="DeskFlow Logo" className="w-full h-full object-contain select-none" />
+              <img src="/deskfloow-logo.png" alt="DeskFloow Logo" className="w-full h-full object-contain select-none" />
             </div>
           </div>
 
@@ -593,9 +593,9 @@ export const PublicBookingPage: React.FC = () => {
 
             {/* FOOTER BRANDING */}
             <div className="flex items-center justify-center gap-1.5 pt-1">
-              <img src="/deskflow-logo.png" alt="DeskFlow" className="w-4 h-4 object-contain rounded-xs" />
+              <img src="/deskfloow-logo.png" alt="DeskFloow" className="w-4 h-4 object-contain rounded-xs" />
               <span className="text-[10px] text-[var(--muted-foreground)] font-semibold tracking-wider uppercase">
-                Powered by DeskFlow
+                Powered by DeskFloow
               </span>
             </div>
           </footer>

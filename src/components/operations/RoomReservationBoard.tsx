@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { RoomCard } from './RoomCard';
+import { RoomBoardSkeleton } from '../skeletons';
 import { cn } from '../../lib/utils';
 import type { OperationsBoardRoom, ReservationRecord } from '../../types/operations';
 
@@ -99,12 +100,7 @@ export const RoomReservationBoard: React.FC<RoomReservationBoardProps> = ({
   }, [floors, filteredRooms, searchQuery, statusFilter]);
 
   if (isLoading && rooms.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] rounded-2xl bg-[var(--card)] border border-[var(--border)] p-8">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin mb-3" />
-        <p className="text-sm font-semibold text-[var(--muted-foreground)]">Loading Room Operations Board...</p>
-      </div>
-    );
+    return <RoomBoardSkeleton />;
   }
 
   if (rooms.length === 0) {

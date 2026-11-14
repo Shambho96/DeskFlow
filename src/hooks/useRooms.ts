@@ -131,7 +131,7 @@ interface CampusDataResponse {
   roomCategories: BackendRoomCategory[];
 }
 
-const GET_CAMPUS_DATA_QUERY = `
+export const GET_CAMPUS_DATA_QUERY = `
   query GetCampusData {
     campusLayout {
       status
@@ -523,7 +523,7 @@ export function useRooms() {
     {
       revalidateOnFocus: true,
       dedupingInterval: 5000,
-      keepPreviousData: true,
+      keepPreviousData: false,
     }
   );
 

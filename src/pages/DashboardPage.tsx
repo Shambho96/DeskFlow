@@ -16,6 +16,7 @@ import {
   Phone,
   PieChart as PieChartIcon,
   Plus,
+  RefreshCw,
   Share2,
   Sparkles,
   TrendingUp,
@@ -43,14 +44,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { DatePicker } from '../components/ui/DatePicker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/Dialog';
 import { PhoneNumberDisplay } from '../components/ui/PhoneNumberDisplay';
-import { useHotel } from '../context/HotelContext';
 import { useModal } from '../context/ModalContext';
+import { useUser } from '../hooks/useUser';
+import { useOutlets, outletLabel } from '../hooks/useOutlets';
+import { useDashboardAnalytics } from '../hooks/useDashboardAnalytics';
+import { DashboardPageSkeleton } from '../components/skeletons/DashboardSkeleton';
 import {
   fetchLivePublicHolidays,
   getUpcomingEventsFromList,
   type HotelEvent
 } from '../data/festivalData';
 import { formatCurrency } from '../lib/utils';
+import type { VIPArrivalGuest } from '../types/analytics';
 
 // Custom Tooltip for Recharts
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -58,60 +63,68 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-[var(--popover)] border border-[var(--border)] text-[var(--popover-foreground)] p-3 rounded-xl shadow-xl text-xs space-y-1.5 min-w-36">
         <p className="font-bold border-b border-[var(--border)] pb-1 mb-1 text-[var(--foreground)]">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center justify-between gap-3 text-[11px] font-semibold">
-            <span style={{ color: entry.color || entry.fill }}>{entry.name}:</span>
-            <span className="font-mono">
-              {entry.name.includes('Revenue') ? `₹${Number(entry.value).toLocaleString()}` : `${entry.value}%`}
-            </span>
-          </div>
-        ))}
+        {payload.map((entry: any, index: number) => {
+          const isRev = entry.name.toLowerCase().includes('revenue') || entry.name.toLowerCase().includes('adr');
+          return (
+            <div key={index} className="flex items-center justify-between gap-3 text-[11px] font-semibold">
+              <span style={{ color: entry.color || entry.fill }}>{entry.name}:</span>
+              <span className="font-mono">
+                {isRev ? `₹${Number(entry.value).toLocaleString()}` : `${entry.value}%`}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   }
   return null;
 };
 
-// Room Category Yield Data
-const roomCategories = [
-  { category: 'Deluxe Suite', occupancy: 85, adr: 6500, totalRooms: 4, occupied: 3 },
-  { category: 'Executive King', occupancy: 75, adr: 4800, totalRooms: 4, occupied: 3 },
-  { category: 'Standard Double', occupancy: 60, adr: 3200, totalRooms: 5, occupied: 3 },
-  { category: 'Single Room', occupancy: 40, adr: 2200, totalRooms: 5, occupied: 2 }
-];
-
 export const DashboardPage: React.FC = () => {
-  const { rooms, reservations, cashRegister } = useHotel();
   const { openNewReservation, openFolio } = useModal();
   const [chartType, setChartType] = useState<'combo' | 'bar' | 'area'>('combo');
   const [isTaggedDialogOpen, setIsTaggedDialogOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
+  // Initialize selected date to today (YYYY-MM-DD local)
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
+
+  const TODAY = selectedDate;
+  const selectedYear = new Date(selectedDate).getFullYear() || 2026;
+
+  // Active User & Outlets for Dynamic Outlet Header Resolution
+  const { user } = useUser();
+  const { outlets } = useOutlets(Boolean(user));
+  const activeOutlet = outlets.find(o => o.id === Number(user?.active_outlet_id));
+
+  // Live Backend Dashboard Analytics Hook
+  const { analytics, isLoading, isValidating, refreshAnalytics } = useDashboardAnalytics({
+    targetDate: selectedDate,
+    trendDays: 7,
+  });
+
+  const propertyName = activeOutlet ? outletLabel(activeOutlet) : (analytics?.outletName || 'DeskFloow Hotel');
+
   // Live Public Holiday API State
   const [liveEvents, setLiveEvents] = useState<HotelEvent[]>([]);
   const [selectedCountry] = useState<string>('IN');
 
-  const [selectedDate, setSelectedDate] = useState<string>('2026-09-24');
-  const TODAY = selectedDate;
-  const selectedYear = new Date(selectedDate).getFullYear() || 2026;
-
-  // Fetch real public holidays from API whenever selectedCountry or selectedYear changes
   useEffect(() => {
     let isMounted = true;
-
     fetchLivePublicHolidays(selectedYear, selectedCountry)
       .then(data => {
-        if (isMounted) {
-          setLiveEvents(data);
-        }
+        if (isMounted) setLiveEvents(data);
       })
       .catch(() => {
-        if (isMounted) {
-          setLiveEvents([]);
-        }
+        if (isMounted) setLiveEvents([]);
       });
-
     return () => {
       isMounted = false;
     };
@@ -121,103 +134,66 @@ export const DashboardPage: React.FC = () => {
   const upcomingEvents = getUpcomingEventsFromList(liveEvents, selectedDate);
   const nextEvent = upcomingEvents[0];
 
-  // Live KPI Computations from reservations & rooms
-  const activeReservations = reservations.filter(r => r.status !== 'CANCELLED');
+  // Derived KPI metrics
+  const kpis = analytics?.kpis || {
+    occupancyPercentage: 0.0,
+    occupiedRooms: 0,
+    totalRooms: 0,
+    salableRooms: 0,
+    arrivalsExpected: 0,
+    arrivalsCheckedIn: 0,
+    arrivalsPending: 0,
+    departuresDue: 0,
+    departuresSettled: 0,
+    departuresPending: 0,
+    dailyRoomRevenue: 0.0,
+    adr: 0.0,
+    revpar: 0.0,
+    trevpar: 0.0,
+    alos: 1.0,
+  };
 
-  const todayArrivals = reservations.filter(r => r.checkIn === TODAY && r.status !== 'CANCELLED');
-  const arrivalsExpected = todayArrivals.length;
-  const arrivalsCheckedIn = todayArrivals.filter(r => r.status === 'CHECKED_IN').length;
-  const arrivalsPending = todayArrivals.filter(r => r.status === 'RESERVED').length;
-
-  // Noted / VIP Arrivals for Today
-  const notedArrivals = reservations.filter(
-    r => r.checkIn === TODAY && r.status !== 'CANCELLED' && r.specialRequests && r.specialRequests.length > 0
-  );
-
-  const todayDepartures = reservations.filter(r => r.checkOut === TODAY && r.status !== 'CANCELLED');
-  const departuresDue = todayDepartures.length;
-  const departuresSettled = todayDepartures.filter(r => r.status === 'CHECKED_OUT').length;
-  const departuresPending = todayDepartures.filter(r => r.status === 'CHECKED_IN' || r.status === 'RESERVED').length;
-
-  const occupiedCount = rooms.filter(r => r.isOccupied).length;
-  const occupancyPercent = rooms.length ? ((occupiedCount / rooms.length) * 100).toFixed(1) : '0.0';
-  const currentDrawerTotal = cashRegister.startingFloat + cashRegister.cashCollected;
-
-  // Dynamic 7-Day Revenue & Occupancy Trend derived from reservations
-  const daysOfWeek = [
-    { day: 'Mon', date: '2026-09-21' },
-    { day: 'Tue', date: '2026-09-22' },
-    { day: 'Wed', date: '2026-09-23' },
-    { day: 'Thu', date: '2026-09-24' },
-    { day: 'Fri', date: '2026-09-25' },
-    { day: 'Sat', date: '2026-09-26' },
-    { day: 'Sun', date: '2026-09-27' },
-  ];
-
-  const totalRoomsCount = rooms.length || 8;
-
-  const weeklyTrend = daysOfWeek.map(({ day, date }) => {
-    let dailyRevenue = 0;
-    let occupiedRoomsForDay = 0;
-
-    reservations.forEach(res => {
-      if (res.status === 'CANCELLED') return;
-      if (res.checkIn <= date && date < res.checkOut) {
-        occupiedRoomsForDay++;
-        const checkInDate = new Date(res.checkIn);
-        const checkOutDate = new Date(res.checkOut);
-        const diffDays = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 3600 * 24)));
-        const nightlyRate = (res.totalAmount || 0) / diffDays;
-        dailyRevenue += nightlyRate;
-      }
-    });
-
-    const occupancy = Math.round((occupiedRoomsForDay / totalRoomsCount) * 100);
-
-    return {
-      day,
-      revenue: Math.round(dailyRevenue),
-      occupancy
-    };
-  });
-
-  // Dynamic Channel Mix derived from reservations
-  const totalActive = activeReservations.length;
-  const channelCounts = activeReservations.reduce((acc, r) => {
-    const source = r.source || 'Direct Walk-in';
-    let category = 'Direct Walk-In';
-    if (source.includes('Booking') || source.includes('Agoda') || source.includes('MakeMyTrip') || source.includes('OTA')) {
-      category = 'OTAs';
-    } else if (source.includes('Web') || source.includes('Direct Web')) {
-      category = 'Direct Website';
-    } else if (source.includes('Corp') || source.includes('Corporate')) {
-      category = 'Corporate';
-    }
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const channelMix = [
-    { name: 'Direct Walk-In', value: totalActive ? Math.round(((channelCounts['Direct Walk-In'] || 0) / totalActive) * 100) : 40, color: 'var(--chart-1)' },
-    { name: 'OTAs (Booking/Agoda)', value: totalActive ? Math.round(((channelCounts['OTAs'] || 0) / totalActive) * 100) : 35, color: 'var(--primary)' },
-    { name: 'Direct Website', value: totalActive ? Math.round(((channelCounts['Direct Website'] || 0) / totalActive) * 100) : 15, color: 'var(--chart-4)' },
-    { name: 'Corporate Accounts', value: totalActive ? Math.round(((channelCounts['Corporate'] || 0) / totalActive) * 100) : 10, color: 'var(--chart-3)' },
-  ];
+  const vipArrivals = analytics?.vipArrivals || [];
+  const weeklyTrend = analytics?.weeklyTrend || [];
+  const channelMix = analytics?.channelMix || [];
+  const totalActiveBookings = analytics?.totalActiveBookings ?? 0;
+  const housekeeping = analytics?.housekeeping || {
+    cleanCount: 0,
+    cleaningCount: 0,
+    dirtyCount: 0,
+    oooCount: 0,
+    rooms: [],
+  };
+  const categoryPerformance = analytics?.categoryPerformance || [];
 
   return (
     <div className="space-y-4 sm:space-y-6 text-left pb-8">
       {/* PAGE HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
-            Front Desk Operations &amp; Analytics
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
+              Front Desk Operations &amp; Analytics
+            </h1>
+            {isValidating && (
+              <RefreshCw className="w-4 h-4 text-[var(--primary)] animate-spin" />
+            )}
+          </div>
           <p className="text-xs text-[var(--muted-foreground)]">
-            Real-time hotel performance metrics &amp; KPI insights • Active Shift: {cashRegister.activeReceptionist}
+            Real-time hotel performance metrics &amp; yield insights • Property: {propertyName}
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <DatePicker value={selectedDate} onChange={setSelectedDate} />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => refreshAnalytics()}
+            title="Refresh analytics data"
+            className="border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)] text-[var(--foreground)] h-9 w-9 p-0 cursor-pointer shadow-xs"
+          >
+            <RefreshCw className={`w-4 h-4 text-[var(--muted-foreground)] ${isValidating ? 'animate-spin' : ''}`} />
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -237,7 +213,12 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* FESTIVAL ALERT STRIP (READ-ONLY, TODAY & 1-3 DAYS WINDOW) */}
+      {/* MAIN DASHBOARD CONTENT: SKELETON WHEN LOADING INITIAL DATA OR SWITCHING OUTLETS */}
+      {isLoading || !analytics ? (
+        <DashboardPageSkeleton />
+      ) : (
+        <>
+          {/* FESTIVAL ALERT STRIP */}
       {nextEvent && nextEvent.daysUntil >= 0 && nextEvent.daysUntil <= 3 && (
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-2.5 flex items-center gap-2.5 shadow-xs">
           <PartyPopper className="w-4 h-4 text-[var(--primary)] shrink-0" />
@@ -251,7 +232,7 @@ export const DashboardPage: React.FC = () => {
       )}
 
       {/* NOTED & VIP ARRIVALS ALERT STRIP */}
-      {notedArrivals.length > 0 && (
+      {vipArrivals.length > 0 && (
         <div
           onClick={() => setIsTaggedDialogOpen(true)}
           className="bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/40 rounded-xl p-3.5 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all cursor-pointer shadow-xs hover:shadow-md group"
@@ -266,11 +247,12 @@ export const DashboardPage: React.FC = () => {
                   Today's VIP &amp; Noted Arrivals
                 </span>
                 <span className="bg-[var(--primary)] text-[var(--primary-foreground)] text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  {notedArrivals.length} Guests
+                  {vipArrivals.length} Guests
                 </span>
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-                {notedArrivals.map(g => g.guestName).join(', ')} arriving today with special requests ({notedArrivals.flatMap(g => g.specialRequests || []).join(', ')})
+                {vipArrivals.map(g => g.guestName).slice(0, 3).join(', ')}
+                {vipArrivals.length > 3 ? ` and ${vipArrivals.length - 3} more` : ''} arriving today with special preferences.
               </p>
             </div>
           </div>
@@ -281,9 +263,9 @@ export const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* ─── SIMPLE KPI METRICS ────────────────────── */}
+      {/* ─── TOP-LINE KPI METRICS (4 CARDS) ────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Occupancy */}
+        {/* KPI 1: Occupancy Rate */}
         <Card className="border-[var(--border)] bg-[var(--card)] shadow-xs hover:border-[var(--primary)]/40 transition-colors">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-center justify-between">
@@ -294,10 +276,10 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2.5">
               <div className="text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums">
-                {occupancyPercent}%
+                {kpis.occupancyPercentage.toFixed(1)}%
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">
-                {occupiedCount} of {rooms.length} rooms occupied
+                {kpis.occupiedRooms} of {kpis.salableRooms} salable rooms occupied
               </p>
             </div>
           </CardContent>
@@ -314,10 +296,10 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2.5">
               <div className="text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums">
-                {arrivalsExpected}
+                {kpis.arrivalsExpected}
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">
-                {arrivalsCheckedIn} checked in · {arrivalsPending} pending
+                {kpis.arrivalsCheckedIn} checked in · {kpis.arrivalsPending} pending
               </p>
             </div>
           </CardContent>
@@ -334,30 +316,30 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2.5">
               <div className="text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums">
-                {departuresDue}
+                {kpis.departuresDue}
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">
-                {departuresSettled} settled · {departuresPending} pending
+                {kpis.departuresSettled} settled · {kpis.departuresPending} pending
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* KPI 4: Cash Drawer */}
+        {/* KPI 4: Daily Room Revenue & RevPAR */}
         <Card className="border-[var(--border)] bg-[var(--card)] shadow-xs hover:border-[var(--primary)]/40 transition-colors">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[var(--muted-foreground)]">Cash Drawer</span>
+              <span className="text-xs font-medium text-[var(--muted-foreground)]">Daily Room Revenue</span>
               <span className="p-2 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)]">
                 <DollarSign className="w-4 h-4" />
               </span>
             </div>
             <div className="mt-2.5">
               <div className="text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums">
-                {formatCurrency(currentDrawerTotal)}
+                {formatCurrency(kpis.dailyRoomRevenue)}
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">
-                Shift: {cashRegister.activeReceptionist}
+                RevPAR: {formatCurrency(kpis.revpar)} · ADR: {formatCurrency(kpis.adr)}
               </p>
             </div>
           </CardContent>
@@ -385,28 +367,31 @@ export const DashboardPage: React.FC = () => {
                 <div className="bg-[var(--muted)] p-0.5 rounded-xl flex items-center text-xs border border-[var(--border)]/40">
                   <button
                     onClick={() => setChartType('combo')}
-                    className={`px-2.5 py-1 rounded-lg font-medium text-[11px] transition-all cursor-pointer ${chartType === 'combo'
+                    className={`px-2.5 py-1 rounded-lg font-medium text-[11px] transition-all cursor-pointer ${
+                      chartType === 'combo'
                         ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-semibold'
                         : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                      }`}
+                    }`}
                   >
                     Combo (Bar+Line)
                   </button>
                   <button
                     onClick={() => setChartType('bar')}
-                    className={`px-2.5 py-1 rounded-lg font-medium text-[11px] transition-all cursor-pointer ${chartType === 'bar'
+                    className={`px-2.5 py-1 rounded-lg font-medium text-[11px] transition-all cursor-pointer ${
+                      chartType === 'bar'
                         ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-semibold'
                         : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                      }`}
+                    }`}
                   >
                     Bar Chart
                   </button>
                   <button
                     onClick={() => setChartType('area')}
-                    className={`px-2.5 py-1 rounded-lg font-medium text-[11px] transition-all cursor-pointer ${chartType === 'area'
+                    className={`px-2.5 py-1 rounded-lg font-medium text-[11px] transition-all cursor-pointer ${
+                      chartType === 'area'
                         ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-semibold'
                         : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                      }`}
+                    }`}
                   >
                     Area Curve
                   </button>
@@ -429,50 +414,107 @@ export const DashboardPage: React.FC = () => {
 
           <CardContent className="p-3 sm:p-5 pt-4">
             <div className="h-56 sm:h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                {chartType === 'combo' ? (
-                  <ComposedChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                    <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                    <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} unit="%" domain={[0, 100]} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[6, 6, 0, 0]} maxBarSize={36} />
-                    <Line yAxisId="right" type="monotone" dataKey="occupancy" name="Occupancy" stroke="var(--chart-1)" strokeWidth={3} dot={{ r: 4, fill: 'var(--chart-1)', stroke: 'var(--card)', strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                  </ComposedChart>
-                ) : chartType === 'bar' ? (
-                  <BarChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                    <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                    <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} unit="%" domain={[0, 100]} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                    <Bar yAxisId="right" dataKey="occupancy" name="Occupancy" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                  </BarChart>
-                ) : (
-                  <AreaChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                    <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                    <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                    <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} unit="%" domain={[0, 100]} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Area yAxisId="left" type="monotone" dataKey="revenue" name="Revenue" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                    <Line yAxisId="right" type="monotone" dataKey="occupancy" name="Occupancy" stroke="var(--chart-1)" strokeWidth={2.5} strokeDasharray="3 3" dot={{ r: 4, fill: 'var(--chart-1)' }} />
-                  </AreaChart>
-                )}
-              </ResponsiveContainer>
+              {weeklyTrend.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-xs text-[var(--muted-foreground)]">
+                  No historical trend data available for this range.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  {chartType === 'combo' ? (
+                    <ComposedChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+                      <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                      <YAxis
+                        yAxisId="left"
+                        stroke="var(--muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="var(--muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        unit="%"
+                        domain={[0, 100]}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="occupancy"
+                        name="Occupancy"
+                        stroke="var(--chart-1)"
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: 'var(--chart-1)', stroke: 'var(--card)', strokeWidth: 2 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </ComposedChart>
+                  ) : chartType === 'bar' ? (
+                    <BarChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+                      <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                      <YAxis
+                        yAxisId="left"
+                        stroke="var(--muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="var(--muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        unit="%"
+                        domain={[0, 100]}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                      <Bar yAxisId="right" dataKey="occupancy" name="Occupancy" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                    </BarChart>
+                  ) : (
+                    <AreaChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+                      <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                      <YAxis
+                        yAxisId="left"
+                        stroke="var(--muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="var(--muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        unit="%"
+                        domain={[0, 100]}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area yAxisId="left" type="monotone" dataKey="revenue" name="Revenue" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                      <Line yAxisId="right" type="monotone" dataKey="occupancy" name="Occupancy" stroke="var(--chart-1)" strokeWidth={2.5} strokeDasharray="3 3" dot={{ r: 4, fill: 'var(--chart-1)' }} />
+                    </AreaChart>
+                  )}
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* BENTO 5: BOOKING CHANNELS MIX DONUT (col-span-12 lg:col-span-4) */}
+        {/* BOOKING CHANNELS MIX DONUT (col-span-12 lg:col-span-4) */}
         <Card className="col-span-12 lg:col-span-4 hover:border-[var(--primary)]/40 transition-all shadow-xs flex flex-col justify-between">
           <CardHeader className="p-5 pb-2 border-b border-[var(--border)]">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -480,7 +522,7 @@ export const DashboardPage: React.FC = () => {
               Booking Source Mix
             </CardTitle>
             <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">
-              Current month channel breakdown
+              Active channel distribution &amp; source share
             </p>
           </CardHeader>
           <CardContent className="p-5 space-y-3">
@@ -495,7 +537,7 @@ export const DashboardPage: React.FC = () => {
                     innerRadius={52}
                     outerRadius={75}
                     paddingAngle={4}
-                    dataKey="value"
+                    dataKey="percentage"
                   >
                     {channelMix.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--card)" strokeWidth={2} />
@@ -506,7 +548,7 @@ export const DashboardPage: React.FC = () => {
               </ResponsiveContainer>
               {/* Center Donut Text */}
               <div className="absolute flex flex-col items-center justify-center pointer-events-none text-center">
-                <span className="text-xl font-bold text-[var(--foreground)] tabular-nums">{totalActive}</span>
+                <span className="text-xl font-bold text-[var(--foreground)] tabular-nums">{totalActiveBookings}</span>
                 <span className="text-[10px] text-[var(--muted-foreground)] font-medium">Bookings</span>
               </div>
             </div>
@@ -519,14 +561,17 @@ export const DashboardPage: React.FC = () => {
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
                     <span className="text-[var(--foreground)] font-medium">{c.name}</span>
                   </div>
-                  <span className="font-bold text-[var(--foreground)] font-mono tabular-nums">{c.value}%</span>
+                  <div className="flex items-center gap-2 font-mono tabular-nums">
+                    <span className="text-[var(--muted-foreground)] text-[11px]">({c.count})</span>
+                    <span className="font-bold text-[var(--foreground)]">{c.percentage}%</span>
+                  </div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* LIVE HOUSEKEEPING & ROOM STATUS (col-span-12 lg:col-span-7) */}
+        {/* LIVE HOUSEKEEPING & ROOM READINESS (col-span-12 lg:col-span-7) */}
         <Card className="col-span-12 lg:col-span-7 hover:border-[var(--primary)]/40 transition-all shadow-xs flex flex-col justify-between">
           <CardHeader className="p-5 pb-2 border-b border-[var(--border)]">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -534,26 +579,34 @@ export const DashboardPage: React.FC = () => {
               Live Housekeeping &amp; Room Readiness
             </CardTitle>
             <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">
-              Turnaround status distribution across all 8 rooms
+              Turnaround status distribution across all {kpis.totalRooms} rooms
             </p>
           </CardHeader>
           <CardContent className="p-5 space-y-4">
             {/* Status Indicator Badges */}
             <div className="grid grid-cols-4 gap-2 text-center text-xs">
               <div className="p-3 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)]">
-                <p className="text-[var(--foreground)] font-black text-xl tabular-nums">5</p>
+                <p className="text-[var(--foreground)] font-black text-xl tabular-nums">
+                  {housekeeping.cleanCount}
+                </p>
                 <p className="text-[10px] text-[var(--muted-foreground)] font-semibold uppercase tracking-wider mt-0.5">Clean</p>
               </div>
               <div className="p-3 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)]">
-                <p className="text-[var(--foreground)] font-black text-xl tabular-nums">1</p>
+                <p className="text-[var(--foreground)] font-black text-xl tabular-nums">
+                  {housekeeping.cleaningCount}
+                </p>
                 <p className="text-[10px] text-[var(--muted-foreground)] font-semibold uppercase tracking-wider mt-0.5">Cleaning</p>
               </div>
               <div className="p-3 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)]">
-                <p className="text-[var(--foreground)] font-black text-xl tabular-nums">1</p>
+                <p className="text-[var(--foreground)] font-black text-xl tabular-nums">
+                  {housekeeping.dirtyCount}
+                </p>
                 <p className="text-[10px] text-[var(--muted-foreground)] font-semibold uppercase tracking-wider mt-0.5">Dirty</p>
               </div>
               <div className="p-3 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)]">
-                <p className="text-[var(--destructive)] font-black text-xl tabular-nums">1</p>
+                <p className="text-[var(--destructive)] font-black text-xl tabular-nums">
+                  {housekeeping.oooCount}
+                </p>
                 <p className="text-[10px] text-[var(--muted-foreground)] font-semibold uppercase tracking-wider mt-0.5">OOO</p>
               </div>
             </div>
@@ -561,27 +614,44 @@ export const DashboardPage: React.FC = () => {
             {/* Room Distribution Pills */}
             <div className="pt-2 border-t border-[var(--border)]">
               <p className="text-xs font-semibold text-[var(--muted-foreground)] mb-2.5">Live Room Distribution:</p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                {['101', '102', '103', '301', '302'].map(r => (
-                  <span key={r} className="px-2.5 py-1 rounded-lg bg-[var(--muted)]/40 text-[var(--foreground)] font-medium border border-[var(--border)] flex items-center gap-1.5 shadow-2xs">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" /> Room {r}
-                  </span>
-                ))}
-                <span className="px-2.5 py-1 rounded-lg bg-[var(--muted)]/40 text-[var(--foreground)] font-medium border border-[var(--border)] flex items-center gap-1.5 shadow-2xs">
-                  <Clock className="w-3.5 h-3.5 text-[var(--muted-foreground)] shrink-0" /> Room 202
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-[var(--muted)]/40 text-[var(--foreground)] font-medium border border-[var(--border)] flex items-center gap-1.5 shadow-2xs">
-                  <AlertTriangle className="w-3.5 h-3.5 text-[var(--muted-foreground)] shrink-0" /> Room 201
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-[var(--muted)]/40 text-[var(--foreground)] font-medium border border-[var(--border)] flex items-center gap-1.5 shadow-2xs">
-                  <Wrench className="w-3.5 h-3.5 text-[var(--destructive)] shrink-0" /> Room 401
-                </span>
+              <div className="flex flex-wrap gap-2 text-xs max-h-36 overflow-y-auto pr-1">
+                {housekeeping.rooms.length === 0 ? (
+                  <span className="text-xs text-[var(--muted-foreground)] italic">No rooms registered.</span>
+                ) : (
+                  housekeeping.rooms.map((r) => {
+                    const isClean = r.status === 'CLEAN';
+                    const isCleaning = r.status === 'CLEANING';
+                    const isDirty = r.status === 'DIRTY';
+                    const isOoo = r.status === 'OOO';
+
+                    return (
+                      <span
+                        key={r.roomId}
+                        className={`px-2.5 py-1 rounded-lg font-medium border flex items-center gap-1.5 shadow-2xs ${
+                          isOoo
+                            ? 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/30'
+                            : isDirty
+                            ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                            : isCleaning
+                            ? 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30'
+                            : 'bg-[var(--muted)]/40 text-[var(--foreground)] border-[var(--border)]'
+                        }`}
+                      >
+                        {isClean && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />}
+                        {isCleaning && <Clock className="w-3.5 h-3.5 text-sky-500 shrink-0" />}
+                        {isDirty && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                        {isOoo && <Wrench className="w-3.5 h-3.5 text-[var(--destructive)] shrink-0" />}
+                        <span>Room {r.roomNumber}</span>
+                      </span>
+                    );
+                  })
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* BENTO 7: ROOM CATEGORY PERFORMANCE & ADR (col-span-12 lg:col-span-5) */}
+        {/* ROOM CATEGORY PERFORMANCE & ADR (col-span-12 lg:col-span-5) */}
         <Card className="col-span-12 lg:col-span-5 hover:border-[var(--primary)]/40 transition-all shadow-xs flex flex-col justify-between">
           <CardHeader className="p-5 pb-2 border-b border-[var(--border)]">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -594,19 +664,27 @@ export const DashboardPage: React.FC = () => {
           </CardHeader>
           <CardContent className="p-5">
             <div className="h-56 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart layout="vertical" data={roomCategories} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} horizontal={false} />
-                  <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} domain={[0, 100]} unit="%" />
-                  <YAxis type="category" dataKey="category" stroke="var(--foreground)" fontSize={11} tickLine={false} width={95} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="occupancy" name="Occupancy Rate" fill="var(--primary)" radius={[0, 6, 6, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
+              {categoryPerformance.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-xs text-[var(--muted-foreground)]">
+                  No category data available.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={categoryPerformance} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} horizontal={false} />
+                    <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} domain={[0, 100]} unit="%" />
+                    <YAxis type="category" dataKey="category" stroke="var(--foreground)" fontSize={11} tickLine={false} width={95} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="occupancy" name="Occupancy Rate" fill="var(--primary)" radius={[0, 6, 6, 0]} barSize={16} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
+        </>
+      )}
 
       {/* TAGGED & NOTED GUESTS DIALOG */}
       <Dialog open={isTaggedDialogOpen} onOpenChange={setIsTaggedDialogOpen}>
@@ -620,11 +698,11 @@ export const DashboardPage: React.FC = () => {
                 <DialogTitle className="text-base font-bold flex items-center gap-2">
                   Today's VIP &amp; Noted Arrivals
                   <span className="bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 text-xs px-2.5 py-0.5 rounded-full font-bold">
-                    {notedArrivals.length} Guests
+                    {vipArrivals.length} Guests
                   </span>
                 </DialogTitle>
                 <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-                  Guests arriving on {TODAY} with special preferences, room requests, or notes.
+                  Guests arriving on {TODAY} with special preferences, room requests, or VIP status.
                 </p>
               </div>
             </div>
@@ -642,15 +720,15 @@ export const DashboardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
-                {notedArrivals.length === 0 ? (
+                {vipArrivals.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-[var(--muted-foreground)]">
                       No arriving guests with special notes today.
                     </td>
                   </tr>
                 ) : (
-                  notedArrivals.map(res => (
-                    <tr key={res.id} className="hover:bg-[var(--muted)]/40 transition-colors">
+                  vipArrivals.map((res: VIPArrivalGuest) => (
+                    <tr key={res.reservationId} className="hover:bg-[var(--muted)]/40 transition-colors">
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2.5">
                           <img
@@ -661,9 +739,11 @@ export const DashboardPage: React.FC = () => {
                           <div>
                             <div className="font-bold text-[var(--foreground)] flex items-center gap-1.5">
                               {res.guestName}
-                              <span className="bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[var(--primary)]/20">
-                                TAGGED
-                              </span>
+                              {res.vipStatus !== 'STANDARD' && (
+                                <span className="bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[var(--primary)]/20">
+                                  {res.vipStatus}
+                                </span>
+                              )}
                             </div>
                             <div className="text-[11px] text-[var(--muted-foreground)] flex items-center gap-1 mt-0.5">
                               <Phone className="w-3 h-3 text-[var(--muted-foreground)]" /> <PhoneNumberDisplay value={res.phone} />
@@ -672,16 +752,17 @@ export const DashboardPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-3 px-3">
-                        <div className="font-semibold text-[var(--foreground)]">Room {res.roomNumber}</div>
-                        <div className="text-[11px] text-[var(--muted-foreground)]">{res.roomType}</div>
+                        <div className="font-semibold text-[var(--foreground)]">Room {res.roomNumber || '—'}</div>
+                        <div className="text-[11px] text-[var(--muted-foreground)]">{res.categoryName}</div>
                       </td>
                       <td className="py-3 px-3">
                         <div className="font-medium text-[var(--foreground)]">{res.eta || '12:00 PM'}</div>
                         <span
-                          className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${res.status === 'CHECKED_IN'
+                          className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                            res.status === 'CHECKED_IN'
                               ? 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20'
                               : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]'
-                            }`}
+                          }`}
                         >
                           {res.status === 'CHECKED_IN' ? 'Checked In' : 'Expected'}
                         </span>
@@ -708,7 +789,16 @@ export const DashboardPage: React.FC = () => {
                           variant="outline"
                           onClick={() => {
                             setIsTaggedDialogOpen(false);
-                            openFolio(res);
+                            openFolio({
+                              id: String(res.reservationId),
+                              reservationCode: res.reservationCode,
+                              guestName: res.guestName,
+                              roomNumber: res.roomNumber || '',
+                              roomType: res.categoryName,
+                              phone: res.phone,
+                              status: res.status,
+                              folioId: res.folioId,
+                            });
                           }}
                           className="text-xs h-7 gap-1"
                         >
@@ -747,13 +837,13 @@ export const DashboardPage: React.FC = () => {
                 <input
                   type="text"
                   readOnly
-                  value={`${window.location.origin}/book/101`}
+                  value={`${window.location.origin}/book/${analytics?.outletId || Number(user?.active_outlet_id) || 1}`}
                   className="flex-1 h-10 px-3 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-mono font-semibold text-[var(--foreground)] outline-none"
                 />
                 <Button
                   size="sm"
                   onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/book/101`);
+                    navigator.clipboard.writeText(`${window.location.origin}/book/${analytics?.outletId || Number(user?.active_outlet_id) || 1}`);
                     setLinkCopied(true);
                     setTimeout(() => setLinkCopied(false), 2000);
                   }}
@@ -787,7 +877,7 @@ export const DashboardPage: React.FC = () => {
 
               <Button
                 size="sm"
-                onClick={() => window.open('/book/101', '_blank')}
+                onClick={() => window.open(`/book/${analytics?.outletId || Number(user?.active_outlet_id) || 1}`, '_blank')}
                 className="text-xs font-semibold bg-[var(--primary)] text-white gap-1.5 rounded-xl cursor-pointer"
               >
                 <span>Open Public Page</span>

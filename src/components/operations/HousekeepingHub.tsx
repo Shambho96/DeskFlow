@@ -11,6 +11,7 @@ import {
   Check
 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { HousekeepingSkeleton } from '../skeletons';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
 import { cn } from '../../lib/utils';
 import type { HousekeepingBoardPayload, HousekeepingTaskRecord } from '../../types/operations';
@@ -29,13 +30,18 @@ export const HousekeepingHub: React.FC<HousekeepingHubProps> = ({
   floors,
   selectedFloorId,
   onFloorChange,
-  onUpdateTask
+  onUpdateTask,
+  isLoading
 }) => {
   const tasks = housekeeping?.tasks || [];
   const dirtyCount = housekeeping?.dirtyCount || 0;
   const cleanCount = housekeeping?.cleanCount || 0;
   const occupiedCount = housekeeping?.occupiedCount || 0;
   const oooCount = housekeeping?.oooCount || 0;
+
+  if (isLoading && tasks.length === 0) {
+    return <HousekeepingSkeleton />;
+  }
 
   const getTaskStatusBadge = (status: HousekeepingTaskRecord['status']) => {
     switch (status) {
