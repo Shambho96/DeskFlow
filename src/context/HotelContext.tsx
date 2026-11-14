@@ -64,12 +64,16 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [shiftNotes, setShiftNotes] = useState<ShiftNote[]>(MOCK_NOTES);
   const [cashRegister] = useState<CashRegisterState>(INITIAL_REGISTER);
   const [businessDate] = useState<string>('Sep 24, 2026');
-  const [propertyName] = useState<string>('DeskFlow — Grand Azure Hotel & Suites');
+  const [propertyName] = useState<string>('DeskFloow — Grand Azure Hotel & Suites');
   const [nightAuditPending] = useState<boolean>(true);
 
   // Sync with live backend rooms, floors, and categories with bailout checks to prevent render cascades
   useEffect(() => {
-    if (backendFloors && backendFloors.length > 0) {
+    if (backendFloors) {
+      if (backendFloors.length === 0) {
+        setFloors([]);
+        return;
+      }
       setFloors(prev => {
         const isSame = prev.length === backendFloors.length &&
           backendFloors.every((bf, idx) => prev[idx] && prev[idx].id === String(bf.id) && prev[idx].name === bf.name);
@@ -84,7 +88,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [backendFloors]);
 
   useEffect(() => {
-    if (backendCategories && backendCategories.length > 0) {
+    if (backendCategories) {
+      if (backendCategories.length === 0) {
+        setRoomTypes([]);
+        return;
+      }
       setRoomTypes(prev => {
         const isSame = prev.length === backendCategories.length &&
           backendCategories.every((bc, idx) => prev[idx] && prev[idx].id === String(bc.id) && prev[idx].basePrice === bc.basePrice);
@@ -102,7 +110,11 @@ export const HotelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [backendCategories]);
 
   useEffect(() => {
-    if (backendRooms && backendRooms.length > 0) {
+    if (backendRooms) {
+      if (backendRooms.length === 0) {
+        setRooms([]);
+        return;
+      }
       setRooms(prev => {
         const isSame = prev.length === backendRooms.length &&
           backendRooms.every((br, idx) => {

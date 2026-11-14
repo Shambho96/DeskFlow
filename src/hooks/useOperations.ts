@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import useSWR from 'swr';
+import useSWR, { mutate as globalMutate } from 'swr';
 import { graphqlRequest } from '../lib/graphql';
 import { useUser } from './useUser';
 import type {
@@ -18,7 +18,7 @@ import type {
 // GRAPHQL DOCUMENT DEFINITIONS
 // ==============================================================================
 
-const GET_OPERATIONS_BOARD = `
+export const GET_OPERATIONS_BOARD = `
   query GetOperationsBoard($dateStr: String!, $buildingId: Int, $floorId: Int) {
     operationsBoard(dateStr: $dateStr, buildingId: $buildingId, floorId: $floorId) {
       date
@@ -87,7 +87,7 @@ const GET_OPERATIONS_BOARD = `
   }
 `;
 
-const GET_OPERATIONS_KANBAN = `
+export const GET_OPERATIONS_KANBAN = `
   query GetOperationsKanban($dateStr: String!) {
     operationsKanban(dateStr: $dateStr) {
       arrivals {
@@ -207,7 +207,7 @@ const GET_OPERATIONS_TAPE_CHART = `
   }
 `;
 
-const GET_HOUSEKEEPING_BOARD = `
+export const GET_HOUSEKEEPING_BOARD = `
   query GetHousekeepingBoard($floorId: Int) {
     housekeepingBoard(floorId: $floorId) {
       dirtyCount
@@ -393,7 +393,8 @@ export const useOperations = (
   }, [floorIdFilter]);
 
   // 1. Operations Room Board SWR
-  const boardKey = user ? ['operationsBoard', dateStr, parsedBuildingId, parsedFloorId] : null;
+  const outletId = user?.active_outlet_id ? Number(user.active_outlet_id) : null;
+  const boardKey = outletId ? ['operationsBoard', outletId, dateStr, parsedBuildingId, parsedFloorId] : null;
   const {
     data: boardData,
     error: boardError,
@@ -410,7 +411,7 @@ export const useOperations = (
   );
 
   // 2. Operations Kanban SWR
-  const kanbanKey = user ? ['operationsKanban', dateStr] : null;
+  const kanbanKey = outletId ? ['operationsKanban', outletId, dateStr] : null;
   const {
     data: kanbanData,
     error: kanbanError,
@@ -423,7 +424,7 @@ export const useOperations = (
   );
 
   // 3. Operations Tape Chart SWR
-  const tapeKey = user ? ['operationsTapeChart', dateStr] : null;
+  const tapeKey = outletId ? ['operationsTapeChart', outletId, dateStr] : null;
   const {
     data: tapeData,
     error: tapeError,
@@ -436,7 +437,7 @@ export const useOperations = (
   );
 
   // 4. Housekeeping Board SWR
-  const hkKey = user ? ['housekeepingBoard', parsedFloorId] : null;
+  const hkKey = outletId ? ['housekeepingBoard', outletId, parsedFloorId] : null;
   const {
     data: housekeepingData,
     error: housekeepingError,
@@ -454,7 +455,9 @@ export const useOperations = (
       mutateBoard(),
       mutateKanban(),
       mutateTape(),
-      mutateHousekeeping()
+      mutateHousekeeping(),
+      globalMutate(key => Array.isArray(key) && key[0] === 'crm_guests'),
+      globalMutate('crm_guest_stats')
     ]);
   };
 
@@ -469,7 +472,11 @@ export const useOperations = (
       CREATE_RESERVATION_MUTATION,
       { input: { ...input, idempotencyKey } }
     );
-    await refreshAll();
+    await Promise.all([
+      refreshAll(),
+      globalMutate(key => Array.isArray(key) && key[0] === 'crm_guests'),
+      globalMutate('crm_guest_stats')
+    ]);
     return res.createReservation;
   };
 

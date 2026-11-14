@@ -1,12 +1,12 @@
 #!/bin/sh
-# DeskFlow Frontend Pre-Commit Hook (Husky)
+# DeskFloow Frontend Pre-Commit Hook (Husky)
 # Automatically executes on `git commit` to validate syntax, types, and quality on staged files.
 
 set +e
 
 echo ""
 echo "=============================================================="
-echo "  🔍 [DeskFlow Frontend] Running Pre-Commit Quality Checks... "
+echo "  🔍 [DeskFloow Frontend] Running Pre-Commit Quality Checks... "
 echo "=============================================================="
 echo ""
 

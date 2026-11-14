@@ -11,7 +11,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('deskflow_theme');
+    const saved = localStorage.getItem('DeskFloow_theme');
     return (saved as Theme) || 'dark'; // Defaulting to sleek dark mode
   });
 
@@ -22,7 +22,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('deskflow_theme', theme);
+    localStorage.setItem('DeskFloow_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

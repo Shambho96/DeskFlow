@@ -1,6 +1,6 @@
 # Frontend SWR & Silent Token Refresh Integration Plan
 
-This plan documents the frontend architecture for data fetching, authentication session management, and silent token refreshing using **SWR** and native `fetch()` for the DeskFlow Next.js frontend (`HRM-frontend`).
+This plan documents the frontend architecture for data fetching, authentication session management, and silent token refreshing using **SWR** and native `fetch()` for the DeskFloow Next.js frontend (`HRM-frontend`).
 
 ---
 
@@ -142,7 +142,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [loggedOut, router]);
 
-  if (loading) return <div>Loading DeskFlow PMS...</div>;
+  if (loading) return <div>Loading DeskFloow PMS...</div>;
   if (!user) return null;
 
   return (

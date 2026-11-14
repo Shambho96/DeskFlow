@@ -108,11 +108,17 @@ const OutletSwitcher: React.FC<OutletSwitcherProps> = ({ isCollapsed }) => {
 
   const handleSwitch = async (id: number) => {
     if (id === activeId) { setOpen(false); return; }
+    setOpen(false);
     const target = outlets.find(o => o.id === id);
     const targetName = target ? outletLabel(target) : undefined;
     setSwitching(id);
-    try { await switchOutlet(id, targetName); }
-    finally { setSwitching(null); setOpen(false); }
+    try {
+      await switchOutlet(id, targetName);
+    } catch (err) {
+      console.error('Failed to switch outlet:', err);
+    } finally {
+      setSwitching(null);
+    }
   };
 
   const hasMultiple = outlets.length > 1;
@@ -306,19 +312,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
             'h-[68px] flex items-center shrink-0 cursor-pointer group transition-all',
             isCollapsed ? 'justify-center px-1' : 'px-3.5 gap-2.5'
           )}
-          title="DeskFlow Dashboard"
+          title="DeskFloow Dashboard"
         >
           <div className="w-[52px] h-[52px] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform drop-shadow-md">
             <img
-              src="/deskflow-logo.png"
-              alt="DeskFlow Logo"
+              src="/deskfloow-logo.png"
+              alt="DeskFloow Logo"
               className="w-full h-full object-contain select-none"
             />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-black text-base tracking-tight text-[var(--sidebar-foreground)] leading-none group-hover:text-[var(--primary)] transition-colors">
-                Desk<span className="text-[var(--primary)] font-black">Flow</span>
+                Desk<span className="text-[var(--primary)] font-black">Floow</span>
               </span>
               <span className="text-[9px] font-bold text-[var(--muted-foreground)] tracking-wider uppercase truncate mt-1">
                 Hotel Operations

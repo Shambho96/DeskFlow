@@ -22,6 +22,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import { useRooms } from '../hooks/useRooms';
+import { CampusLayoutSkeleton } from '../components/skeletons';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -804,6 +805,9 @@ export const RoomsPage: React.FC = () => {
       </div>
 
       {/* ─── MAIN TABS ──────────────────────────────────────────────────────── */}
+      {isLoading && buildings.length === 0 ? (
+        <CampusLayoutSkeleton />
+      ) : (
       <Tabs defaultValue="visual" className="w-full">
         <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-auto gap-0 overflow-x-auto no-scrollbar">
           <TabsTrigger
@@ -2279,6 +2283,7 @@ export const RoomsPage: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      )}
 
       {/* ─── MODALS ─────────────────────────────────────────────────────────── */}
             {/* ─── SLIDE-OVER ROOM DETAIL DRAWER ─────────────────────────────────── */}

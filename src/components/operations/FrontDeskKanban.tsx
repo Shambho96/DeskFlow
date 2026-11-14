@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '../../lib/utils';
 import { Button } from '../ui/Button';
+import { KanbanBoardSkeleton } from '../skeletons';
 import { getBookingSourceBadge } from './RoomCard';
 import type { OperationsKanbanPayload, ReservationRecord } from '../../types/operations';
 
@@ -25,7 +26,8 @@ interface FrontDeskKanbanProps {
 export const FrontDeskKanban: React.FC<FrontDeskKanbanProps> = ({
   kanban,
   onCheckIn,
-  onOpenFolio
+  onOpenFolio,
+  isLoading
 }) => {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
@@ -34,6 +36,10 @@ export const FrontDeskKanban: React.FC<FrontDeskKanbanProps> = ({
   const inHouse = kanban?.inHouse || [];
   const departures = kanban?.departures || [];
   const settled = kanban?.settled || [];
+
+  if (isLoading && arrivals.length === 0 && inHouse.length === 0 && departures.length === 0 && settled.length === 0) {
+    return <KanbanBoardSkeleton />;
+  }
 
   const handleDragStart = (e: React.DragEvent, id: number) => {
     e.dataTransfer.setData('text/plain', String(id));

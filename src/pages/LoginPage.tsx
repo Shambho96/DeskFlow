@@ -45,14 +45,14 @@ export const LoginPage: React.FC = () => {
           <div className="inline-flex items-center gap-3 mb-3">
             <div className="w-24 h-24 flex items-center justify-center drop-shadow-2xl">
               <img
-                src="/deskflow-logo.png"
-                alt="DeskFlow Logo"
+                src="/deskfloow-logo.png"
+                alt="DeskFloow Logo"
                 className="w-full h-full object-contain select-none"
               />
             </div>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
-            Desk<span className="text-[var(--primary)]">Flow</span> — Operations Portal
+            Desk<span className="text-[var(--primary)]">Floow</span> — Operations Portal
           </h1>
           <p className="text-xs text-[var(--muted-foreground)] mt-1 font-medium">
             Intelligent Hotel Operations Platform • Sign-In
