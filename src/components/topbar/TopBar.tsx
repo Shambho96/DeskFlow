@@ -14,6 +14,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/app/operations': 'Operations',
   '/app/rooms':      'Rooms & Floors',
   '/app/guests':     'Guests',
+  '/app/reports':    'Reports',
   '/app/settings':   'Settings',
 };
 
@@ -24,7 +25,7 @@ export const TopBar: React.FC<TopBarProps> = ({ isCollapsed, toggleSidebar }) =>
   const { openSearch } = useModal();
   const location = useLocation();
 
-  const pageTitle = PAGE_TITLES[location.pathname] ?? 'DeskFloow';
+  const pageTitle = PAGE_TITLES[location.pathname] ?? 'Dashboard';
 
   // Live ticking clock
   const [now, setNow] = useState<Date>(new Date());

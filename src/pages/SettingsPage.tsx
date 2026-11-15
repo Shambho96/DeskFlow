@@ -1,151 +1,253 @@
-import React, { useState } from 'react';
-import { Building, ShieldCheck, Award } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
-import { TeamManagementTab } from '../components/settings/TeamManagementTab';
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  Building2,
+  Award,
+  Users,
+  ShieldCheck,
+  Sliders,
+  Network,
+  ChevronRight,
+  Sparkles,
+  Tag,
+} from 'lucide-react';
 import { LoyaltyTiersTab } from '../components/settings/LoyaltyTiersTab';
+import { TeamManagementTab } from '../components/settings/TeamManagementTab';
+import { PropertyProfileTab } from '../components/settings/PropertyProfileTab';
+import { RolePermissionsTab } from '../components/settings/RolePermissionsTab';
+import { PreferencesTab } from '../components/settings/PreferencesTab';
+import { ChannelIntegrationsTab } from '../components/settings/ChannelIntegrationsTab';
+import { SpecialRequestsAndTagsTab } from '../components/settings/SpecialRequestsAndTagsTab';
+
+export type SettingsTabId =
+  | 'loyalty'
+  | 'team'
+  | 'roles'
+  | 'profile'
+  | 'special_requests'
+  | 'preferences'
+  | 'integrations';
+
+interface NavItem {
+  id: SettingsTabId;
+  label: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+}
+
+interface NavGroup {
+  groupTitle: string;
+  items: NavItem[];
+}
+
+const SETTINGS_GROUPS: NavGroup[] = [
+  {
+    groupTitle: 'Hotel Configuration',
+    items: [
+      {
+        id: 'loyalty',
+        label: 'VIP Loyalty Tiers',
+        desc: 'Points multipliers, tier criteria & perks',
+        icon: Award,
+        badge: 'VIP CRM',
+      },
+      {
+        id: 'team',
+        label: 'Team Management',
+        desc: 'Staff directory, logins & accounts',
+        icon: Users,
+        badge: 'Staff',
+      },
+      {
+        id: 'roles',
+        label: 'Role Permissions',
+        desc: 'Access matrix & operational capabilities',
+        icon: ShieldCheck,
+      },
+      {
+        id: 'profile',
+        label: 'Property Identity & Tax',
+        desc: 'Legal entity, GSTIN & invoice sequence',
+        icon: Building2,
+      },
+      {
+        id: 'special_requests',
+        label: 'Tags & Preferences',
+        desc: 'Guest tags & reservation visit tags',
+        icon: Tag,
+        badge: 'Booking UI',
+      },
+    ],
+  },
+  {
+    groupTitle: 'Preferences & Display',
+    items: [
+      {
+        id: 'preferences',
+        label: 'Preferences & Regional',
+        desc: 'Theme mode, currency, time & chimes',
+        icon: Sliders,
+      },
+    ],
+  },
+  {
+    groupTitle: 'Channel & Integrations',
+    items: [
+      {
+        id: 'integrations',
+        label: 'OTA Distribution & Hardware',
+        desc: 'Booking.com, RFID encoder & printer',
+        icon: Network,
+        badge: '3 Live',
+      },
+    ],
+  },
+];
 
 export const SettingsPage: React.FC = () => {
-  const [hotelName, setHotelName] = useState('DeskFloow — Grand Azure Hotel & Suites');
-  const [gstin, setGstin] = useState('29AAAAA0000A1Z5');
-  const [email, setEmail] = useState('frontdesk@DeskFloow.app');
-  const [invoicePrefix, setInvoicePrefix] = useState('DF-INV-2026-');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') as SettingsTabId) || 'loyalty';
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert('✅ Settings saved successfully!');
+  const handleSelectTab = (id: SettingsTabId) => {
+    setSearchParams({ tab: id }, { replace: true });
   };
 
+  const currentItem = SETTINGS_GROUPS.flatMap(g => g.items).find(i => i.id === activeTab);
+  const currentGroup = SETTINGS_GROUPS.find(g => g.items.some(i => i.id === activeTab));
+
   return (
-    <div className="space-y-6 text-left">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 text-left pb-12">
+      {/* ─── PAGE HEADER ───────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border)] pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Hotel Settings & Configuration</h1>
-          <p className="text-xs text-[var(--muted-foreground)]">Branding, loyalty VIP tiers, team member directory, and role permissions</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
+              System Settings &amp; Configuration
+            </h1>
+            <Sparkles className="w-4 h-4 text-amber-400" />
+          </div>
+          <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
+            Configure hotel branding, VIP loyalty tiers, staff directory, role permissions, and channel connections
+          </p>
+        </div>
+
+        {/* Current Location Breadcrumb Badge */}
+        {currentItem && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--muted)] border border-[var(--border)] text-xs text-[var(--foreground)] self-start sm:self-auto">
+            <span className="text-[var(--muted-foreground)] text-[11px] font-medium">
+              {currentGroup?.groupTitle}
+            </span>
+            <ChevronRight className="w-3 h-3 text-[var(--muted-foreground)]" />
+            <span className="font-bold text-[var(--primary)]">{currentItem.label}</span>
+          </div>
+        )}
+      </div>
+
+      {/* ─── MOBILE RESPONSIVE TAB STRIP (< md) ─────────────────────────────────────── */}
+      <div className="block md:hidden overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-1.5 w-max">
+          {SETTINGS_GROUPS.flatMap(g => g.items).map(item => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleSelectTab(item.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[var(--primary)] text-white shadow-xs'
+                    : 'bg-[var(--card)] text-[var(--muted-foreground)] border border-[var(--border)] hover:bg-[var(--muted)]'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <Tabs defaultValue="loyalty" className="w-full">
-        <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-auto gap-0 overflow-x-auto no-scrollbar">
-          <TabsTrigger value="loyalty" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5 flex items-center gap-1.5">
-            <Award className="w-3.5 h-3.5" /> VIP Loyalty Tiers
-          </TabsTrigger>
-          <TabsTrigger value="team" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
-            Team & Staff
-          </TabsTrigger>
-          <TabsTrigger value="profile" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
-            Profile & Branding
-          </TabsTrigger>
-          <TabsTrigger value="roles" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3 py-2.5">
-            Role Permissions
-          </TabsTrigger>
-        </TabsList>
+      {/* ─── DESKTOP 2-COLUMN SIDEBAR LAYOUT (>= md) ────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        {/* LEFT COLUMN: NAVIGATION SIDEBAR */}
+        <aside className="hidden md:block md:col-span-4 lg:col-span-3 space-y-5 sticky top-20">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-3 shadow-xs space-y-4">
+            {SETTINGS_GROUPS.map((group, groupIdx) => (
+              <div key={group.groupTitle} className={groupIdx > 0 ? 'pt-3 border-t border-[var(--border)]' : ''}>
+                <h3 className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+                  {group.groupTitle}
+                </h3>
+                <nav className="space-y-1">
+                  {group.items.map(item => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
 
-        {/* SUB-TAB 0: VIP LOYALTY TIERS */}
-        <TabsContent value="loyalty" className="pt-4">
-          <LoyaltyTiersTab />
-        </TabsContent>
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectTab(item.id)}
+                        className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between gap-2.5 transition-all cursor-pointer group ${
+                          isActive
+                            ? 'bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30 font-bold shadow-2xs'
+                            : 'text-[var(--foreground)] hover:bg-[var(--muted)]/60 border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                              isActive
+                                ? 'bg-[var(--primary)] text-white'
+                                : 'bg-[var(--muted)] text-[var(--muted-foreground)] group-hover:text-[var(--foreground)]'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="block text-xs font-semibold leading-tight truncate">
+                              {item.label}
+                            </span>
+                            <span className="block text-[10px] text-[var(--muted-foreground)] truncate mt-0.5 font-normal">
+                              {item.desc}
+                            </span>
+                          </div>
+                        </div>
 
-        {/* SUB-TAB 1: TEAM & STAFF */}
-        <TabsContent value="team" className="pt-4">
-          <TeamManagementTab />
-        </TabsContent>
+                        {item.badge && (
+                          <span
+                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold shrink-0 ${
+                              isActive
+                                ? 'bg-[var(--primary)] text-white'
+                                : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            ))}
+          </div>
+        </aside>
 
-        {/* SUB-TAB 2: PROFILE & BRANDING */}
-        <TabsContent value="profile" className="pt-4">
-          <Card className="max-w-xl mx-auto">
-            <CardHeader className="p-5 border-b border-[var(--border)]">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Building className="w-5 h-5 text-[var(--primary)]" /> Property Identity & Branding
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <form onSubmit={handleSave} className="space-y-4 text-xs">
-                <div>
-                  <label className="block font-semibold text-[var(--muted-foreground)] mb-1">
-                    Hotel / Property Legal Name
-                  </label>
-                  <Input value={hotelName} onChange={e => setHotelName(e.target.value)} />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-semibold text-[var(--muted-foreground)] mb-1">
-                      GSTIN / VAT Tax Registration
-                    </label>
-                    <Input value={gstin} onChange={e => setGstin(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-[var(--muted-foreground)] mb-1">
-                      Invoice Prefix
-                    </label>
-                    <Input value={invoicePrefix} onChange={e => setInvoicePrefix(e.target.value)} />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-[var(--muted-foreground)] mb-1">
-                    Front Desk Operations Email
-                  </label>
-                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                </div>
-
-                <Button type="submit" className="w-full bg-[var(--primary)] text-white font-bold h-9">
-                  Save Changes
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* SUB-TAB 3: ROLE PERMISSIONS MATRIX */}
-        <TabsContent value="roles" className="pt-4">
-          <Card>
-            <CardHeader className="p-5 border-b border-[var(--border)]">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-[var(--primary)]" /> Role Permissions Matrix
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead>
-                  <tr className="border-b border-[var(--border)] bg-[var(--muted)] font-bold text-[var(--muted-foreground)]">
-                    <th className="p-3">Permission Capability</th>
-                    <th className="p-3 text-center">Front Desk</th>
-                    <th className="p-3 text-center">Manager</th>
-                    <th className="p-3 text-center">Housekeeper</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]">
-                  {[
-                    { action: 'Create & Modify Booking', fd: true, mgr: true, hk: false },
-                    { action: 'Delete / Cancel Booking', fd: false, mgr: true, hk: false },
-                    { action: 'Give >10% Discount', fd: false, mgr: true, hk: false },
-                    { action: 'Override Room Cleanliness Status', fd: true, mgr: true, hk: true },
-                    { action: 'Close Shift & Export Cash Audit', fd: true, mgr: true, hk: false },
-                    { action: 'Configure GST & Hotel Profile', fd: false, mgr: true, hk: false }
-                  ].map((perm, idx) => (
-                    <tr key={idx} className="hover:bg-[var(--muted)]/20">
-                      <td className="p-3 font-semibold text-[var(--foreground)]">{perm.action}</td>
-                      <td className="p-3 text-center">
-                        <input type="checkbox" defaultChecked={perm.fd} className="rounded border-[var(--border)] text-[var(--primary)]" />
-                      </td>
-                      <td className="p-3 text-center">
-                        <input type="checkbox" defaultChecked={perm.mgr} className="rounded border-[var(--border)] text-[var(--primary)]" />
-                      </td>
-                      <td className="p-3 text-center">
-                        <input type="checkbox" defaultChecked={perm.hk} className="rounded border-[var(--border)] text-[var(--primary)]" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        {/* RIGHT COLUMN: ACTIVE TAB CONTENT PANEL */}
+        <main className="col-span-1 md:col-span-8 lg:col-span-9 min-w-0">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-xs min-h-[500px]">
+            {activeTab === 'loyalty' && <LoyaltyTiersTab />}
+            {activeTab === 'team' && <TeamManagementTab />}
+            {activeTab === 'roles' && <RolePermissionsTab />}
+            {activeTab === 'profile' && <PropertyProfileTab />}
+            {activeTab === 'special_requests' && <SpecialRequestsAndTagsTab />}
+            {activeTab === 'preferences' && <PreferencesTab />}
+            {activeTab === 'integrations' && <ChannelIntegrationsTab />}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

@@ -5,7 +5,6 @@ import {
   ChevronRight,
   Clock,
   CreditCard,
-  Filter,
   Grid,
   List,
   Mail,
@@ -236,13 +235,6 @@ export const GuestsPage: React.FC = () => {
                   <h2 className="text-xl font-extrabold text-[var(--foreground)] tracking-tight">Guests</h2>
                   <p className="text-xs text-[var(--muted-foreground)] font-mono">{totalCount} total</p>
                 </div>
-                <button
-                  onClick={() => setTierCode('ALL')}
-                  className="p-2 rounded-xl border border-[var(--border)] hover:bg-[var(--muted)] text-[var(--muted-foreground)] transition-colors"
-                  title="Clear Filters"
-                >
-                  <Filter className="w-4 h-4" />
-                </button>
               </div>
 
               {/* Search Bar */}

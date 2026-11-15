@@ -6,6 +6,7 @@ import {
   CalendarDays,
   BedDouble,
   Users,
+  BarChart3,
   Settings,
   ChevronsUpDown,
   Search,
@@ -78,8 +79,10 @@ const OutletSwitcher: React.FC<OutletSwitcherProps> = ({ isCollapsed }) => {
 
   // Focus search when popover opens
   useEffect(() => {
-    if (open) setTimeout(() => searchRef.current?.focus(), 50);
-    else setQuery('');
+    if (open) {
+      const timer = setTimeout(() => searchRef.current?.focus(), 50);
+      return () => clearTimeout(timer);
+    }
   }, [open]);
 
   const activeId = user?.active_outlet_id ? Number(user.active_outlet_id) : null;
@@ -107,8 +110,13 @@ const OutletSwitcher: React.FC<OutletSwitcherProps> = ({ isCollapsed }) => {
       : 'Select outlet';
 
   const handleSwitch = async (id: number) => {
-    if (id === activeId) { setOpen(false); return; }
+    if (id === activeId) {
+      setOpen(false);
+      setQuery('');
+      return;
+    }
     setOpen(false);
+    setQuery('');
     const target = outlets.find(o => o.id === id);
     const targetName = target ? outletLabel(target) : undefined;
     setSwitching(id);
@@ -124,7 +132,17 @@ const OutletSwitcher: React.FC<OutletSwitcherProps> = ({ isCollapsed }) => {
   const hasMultiple = outlets.length > 1;
 
   return (
-    <Popover.Root open={open} onOpenChange={hasMultiple ? setOpen : undefined}>
+    <Popover.Root
+      open={open}
+      onOpenChange={
+        hasMultiple
+          ? (next) => {
+              setOpen(next);
+              if (!next) setQuery('');
+            }
+          : undefined
+      }
+    >
       <Popover.Trigger asChild>
         {isCollapsed ? (
           /* ── Collapsed: icon pill ── */
@@ -352,6 +370,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           <NavItem to="/app/operations" icon={CalendarDays}     label="Operations"     isCollapsed={isCollapsed} />
           <NavItem to="/app/rooms"      icon={BedDouble}        label="Rooms & Floors" isCollapsed={isCollapsed} />
           <NavItem to="/app/guests"     icon={Users}            label="Guests (CRM)"   isCollapsed={isCollapsed} />
+          <NavItem to="/app/reports"    icon={BarChart3}        label="Reports"        isCollapsed={isCollapsed} />
         </div>
 
         {/* ── System ──────────────────────────────────────────────────────── */}

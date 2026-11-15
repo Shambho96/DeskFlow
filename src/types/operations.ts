@@ -32,6 +32,10 @@ export interface GuestRecord {
   nationality?: string;
   bookingSource?: BookingSource;
   specialRequests?: string[];
+  dateOfBirth?: string;
+  city?: string;
+  state?: string;
+  purposeOfVisit?: string;
 }
 
 export interface ReservationRecord {
@@ -48,6 +52,7 @@ export interface ReservationRecord {
   eta?: string;
   status: ReservationStatus;
   bookingSource: BookingSource;
+  purposeOfVisit?: string;
   adultsCount: number;
   childrenCount: number;
   ratePerNight: number;
@@ -185,6 +190,10 @@ export interface CreateReservationInput {
   transactionRef?: string;
   eta?: string;
   idempotencyKey?: string;
+  purposeOfVisit?: string;
+  dateOfBirth?: string;
+  city?: string;
+  state?: string;
 }
 
 export interface SettlePaymentInput {
