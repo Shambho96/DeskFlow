@@ -280,6 +280,10 @@ const LOOKUP_GUEST_BY_PHONE_QUERY = `
       nationality
       bookingSource
       specialRequests
+      dateOfBirth
+      city
+      state
+      purposeOfVisit
     }
   }
 `;
@@ -295,6 +299,7 @@ const CREATE_RESERVATION_MUTATION = `
       checkOutDate
       status
       bookingSource
+      purposeOfVisit
       ratePerNight
       totalRoomCharges
       taxAmount
@@ -307,6 +312,10 @@ const CREATE_RESERVATION_MUTATION = `
         lastName
         fullName
         phone
+        dateOfBirth
+        city
+        state
+        purposeOfVisit
       }
     }
   }

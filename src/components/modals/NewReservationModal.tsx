@@ -10,11 +10,15 @@ import {
   Loader2,
   CheckCircle2,
   UserCheck,
-  UserPlus
+  UserPlus,
+  Tag,
+  Plus,
+  Compass,
 } from 'lucide-react';
 import { useHotel } from '../../context/HotelContext';
 import { useRooms } from '../../hooks/useRooms';
 import { useOperations } from '../../hooks/useOperations';
+import { useHotelPreferences } from '../../hooks/useHotelPreferences';
 import { useModal } from '../../context/ModalContext';
 import { getPhoneInputParts, normalizePhoneNumber } from '../../lib/phone';
 import { cn, formatCurrency } from '../../lib/utils';
@@ -45,6 +49,13 @@ const normalizeBookingSource = (val?: string): BookingSource => {
   return 'WALKIN';
 };
 
+const generateReservationIdempotencyKey = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `idemp-res-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+};
+
 export const NewReservationModal: React.FC = () => {
   const { isNewReservationOpen, closeNewReservation, prefillReservation } = useModal();
   const { roomTypes: fallbackRoomTypes, addReservation, reservations: hotelReservations } = useHotel();
@@ -69,6 +80,16 @@ export const NewReservationModal: React.FC = () => {
 
   // Active operations hook for mutations, live room availability & guest lookup
   const { createReservation, checkInGuest, tapeChart, lookupGuestByPhone } = useOperations(checkIn);
+  const { activeSpecialRequests, activeGuestTags } = useHotelPreferences();
+  const [customTagInput, setCustomTagInput] = useState('');
+
+  const handleAddCustomTag = () => {
+    const trimmed = customTagInput.trim();
+    if (trimmed && !specialRequests.includes(trimmed)) {
+      setSpecialRequests(prev => [...prev, trimmed]);
+      setCustomTagInput('');
+    }
+  };
 
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
@@ -101,6 +122,12 @@ export const NewReservationModal: React.FC = () => {
   const [bookingSource, setBookingSource] = useState<BookingSource>('WALKIN');
   const [specialRequests, setSpecialRequests] = useState<string[]>([]);
 
+  // Target Audience & Origin Fields
+  const [purposeOfVisit, setPurposeOfVisit] = useState<string>('LEISURE');
+  const [dateOfBirth, setDateOfBirth] = useState<string>('');
+  const [city, setCity] = useState<string>('');
+  const [stateRegion, setStateRegion] = useState<string>('');
+
   // Debounced CRM Guest Lookup State
   const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'found' | 'not_found'>('idle');
   const [foundGuest, setFoundGuest] = useState<{
@@ -112,6 +139,10 @@ export const NewReservationModal: React.FC = () => {
     vipStatus?: string;
     bookingSource?: string;
     specialRequests?: string[];
+    dateOfBirth?: string;
+    city?: string;
+    state?: string;
+    purposeOfVisit?: string;
   } | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -238,6 +269,10 @@ export const NewReservationModal: React.FC = () => {
     setIdNumber('');
     setSpecialRequests([]);
     setBookingSource('WALKIN');
+    setPurposeOfVisit('LEISURE');
+    setDateOfBirth('');
+    setCity('');
+    setStateRegion('');
     setSearchStatus('idle');
     setFoundGuest(null);
     setErrorMessage(null);
@@ -262,6 +297,10 @@ export const NewReservationModal: React.FC = () => {
       setIdNumber('');
       setSpecialRequests([]);
       setBookingSource('WALKIN');
+      setPurposeOfVisit('LEISURE');
+      setDateOfBirth('');
+      setCity('');
+      setStateRegion('');
     }
 
     if (debounceTimerRef.current) {
@@ -338,7 +377,11 @@ export const NewReservationModal: React.FC = () => {
             idNumber: retrievedIdNumber,
             vipStatus: guest.vipStatus,
             bookingSource: retrievedBookingSource,
-            specialRequests: retrievedSpecialReqs
+            specialRequests: retrievedSpecialReqs,
+            dateOfBirth: guest.dateOfBirth,
+            city: guest.city,
+            state: guest.state,
+            purposeOfVisit: guest.purposeOfVisit,
           });
           setSearchStatus('found');
           if (guest.firstName) setFirstName(guest.firstName);
@@ -352,6 +395,12 @@ export const NewReservationModal: React.FC = () => {
           if (retrievedSpecialReqs.length > 0) {
             setSpecialRequests(retrievedSpecialReqs);
           }
+          if (guest.dateOfBirth) {
+            setDateOfBirth(String(guest.dateOfBirth).slice(0, 10));
+          }
+          if (guest.city) setCity(guest.city);
+          if (guest.state) setStateRegion(guest.state);
+          if (guest.purposeOfVisit) setPurposeOfVisit(guest.purposeOfVisit);
         } else {
           // New guest: keep fields blank as requested
           setFoundGuest(null);
@@ -403,9 +452,7 @@ export const NewReservationModal: React.FC = () => {
       const roomId = matchedRoom?.id;
 
       // Idempotency Key: UUIDv4
-      const idempotencyKey = typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `idemp-res-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const idempotencyKey = generateReservationIdempotencyKey();
 
       // 1. Call Backend GraphQL Mutation with direct booking source and idempotency
       const createdRes = await createReservation({
@@ -426,7 +473,11 @@ export const NewReservationModal: React.FC = () => {
         ratePerNight: nightlyRate,
         advancePayment: paidDeposit,
         paymentMethod: paymentMethod,
-        idempotencyKey
+        idempotencyKey,
+        purposeOfVisit: purposeOfVisit || undefined,
+        dateOfBirth: dateOfBirth || undefined,
+        city: city.trim() || undefined,
+        state: stateRegion.trim() || undefined,
       });
 
       // 2. If Instant Check-in requested
@@ -687,34 +738,232 @@ export const NewReservationModal: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[var(--muted-foreground)] mb-2">
-                  Special Requests & Guest Tags
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {Array.from(new Set([
-                    'High Floor',
-                    'Late Arrival',
-                    'Extra Towels',
-                    'Quiet Room',
-                    'Airport Transfer',
-                    'Ocean View',
-                    ...specialRequests
-                  ])).map(tag => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleSpecialRequest(tag)}
-                      className={cn(
-                        'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
-                        specialRequests.includes(tag)
-                          ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                          : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)]'
-                      )}
-                    >
-                      {tag}
-                    </button>
-                  ))}
+              {/* Target Audience & Origin Profile */}
+              <div className="p-3.5 rounded-2xl bg-[var(--muted)]/30 border border-[var(--border)] space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center justify-center">
+                    <Compass className="w-3 h-3" />
+                  </div>
+                  <label className="text-xs font-bold text-[var(--foreground)]">
+                    Audience &amp; Origin Profile
+                    <span className="text-[11px] font-normal text-[var(--muted-foreground)] ml-1.5">
+                      (Purpose, DOB &amp; Origin)
+                    </span>
+                  </label>
+                </div>
+
+                {/* 1. Purpose of Visit Chips */}
+                <div>
+                  <span className="text-[11px] font-semibold text-[var(--muted-foreground)] block mb-1.5">
+                    Purpose of Visit
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { id: 'BUSINESS', label: 'Business / Work' },
+                      { id: 'LEISURE', label: 'Leisure / Vacation' },
+                      { id: 'FAMILY', label: 'Family Trip' },
+                      { id: 'EVENT', label: 'Event / Wedding' },
+                      { id: 'TRANSIT', label: 'Transit / Stopover' },
+                    ].map(item => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setPurposeOfVisit(item.id)}
+                        className={cn(
+                          'px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-xs',
+                          purposeOfVisit === item.id
+                            ? 'bg-[var(--primary)] text-white border-[var(--primary)] scale-102'
+                            : 'bg-[var(--card)] text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)]'
+                        )}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Date of Birth, Origin City & State */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">
+                      Date of Birth (DOB)
+                    </label>
+                    <Input
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={e => setDateOfBirth(e.target.value)}
+                      className="h-8 text-xs bg-[var(--background)] border-[var(--border)]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">
+                      Origin City (Came From)
+                    </label>
+                    <Input
+                      placeholder="e.g. Mumbai, Pune, Bengaluru"
+                      value={city}
+                      onChange={e => setCity(e.target.value)}
+                      className="h-8 text-xs bg-[var(--background)] border-[var(--border)]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[var(--muted-foreground)] mb-1">
+                      Origin State / Region
+                    </label>
+                    <Input
+                      placeholder="e.g. Maharashtra, Karnataka"
+                      value={stateRegion}
+                      onChange={e => setStateRegion(e.target.value)}
+                      className="h-8 text-xs bg-[var(--background)] border-[var(--border)]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Special Requests & Guest Tags Section */}
+              <div className="space-y-4 pt-1">
+                {/* 1. Guest Tags (Persistent labels e.g. VIP) */}
+                {activeGuestTags.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-5 h-5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center">
+                        <Tag className="w-3 h-3" />
+                      </div>
+                      <label className="text-xs font-bold text-[var(--foreground)]">
+                        Guest Tags
+                        <span className="text-[11px] font-normal text-[var(--muted-foreground)] ml-1.5">
+                          (Persistent labels e.g. VIP)
+                        </span>
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {activeGuestTags.map(tagObj => {
+                        const tag = tagObj.name;
+                        const isSelected = specialRequests.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => toggleSpecialRequest(tag)}
+                            className={cn(
+                              'px-3 py-1 rounded-full text-xs font-bold tracking-wide border transition-all cursor-pointer shadow-xs',
+                              isSelected
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs scale-102'
+                                : 'bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60'
+                            )}
+                          >
+                            {tag}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Reservation Tags (Visit specific e.g. BIRTHDAY) */}
+                {activeSpecialRequests.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                        <Tag className="w-3 h-3" />
+                      </div>
+                      <label className="text-xs font-bold text-[var(--foreground)]">
+                        Reservation Tags
+                        <span className="text-[11px] font-normal text-[var(--muted-foreground)] ml-1.5">
+                          (Visit specific e.g. BIRTHDAY)
+                        </span>
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {activeSpecialRequests.map(reqObj => {
+                        const tag = reqObj.label;
+                        const isSelected = specialRequests.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => toggleSpecialRequest(tag)}
+                            className={cn(
+                              'px-3 py-1 rounded-full text-xs font-bold tracking-wide border transition-all cursor-pointer flex items-center gap-1.5 shadow-xs',
+                              isSelected
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-102'
+                                : 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
+                            )}
+                          >
+                            {tag}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected or prefilled custom tags */}
+                {specialRequests.filter(
+                  tag =>
+                    !activeGuestTags.some(t => t.name === tag) &&
+                    !activeSpecialRequests.some(r => r.label === tag)
+                ).length > 0 && (
+                  <div>
+                    <label className="text-xs font-bold text-[var(--foreground)] block mb-1.5">
+                      Selected / Custom Tags:
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {specialRequests
+                        .filter(
+                          tag =>
+                            !activeGuestTags.some(t => t.name === tag) &&
+                            !activeSpecialRequests.some(r => r.label === tag)
+                        )
+                        .map(customTag => (
+                          <button
+                            key={customTag}
+                            type="button"
+                            onClick={() => toggleSpecialRequest(customTag)}
+                            className="px-3 py-1 rounded-full text-xs font-bold border bg-[var(--primary)] text-white border-[var(--primary)] shadow-xs flex items-center gap-1.5"
+                          >
+                            <span>{customTag}</span>
+                            <span className="text-[10px] opacity-75">×</span>
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* If no tags in settings yet */}
+                {activeGuestTags.length === 0 && activeSpecialRequests.length === 0 && specialRequests.length === 0 && (
+                  <p className="text-xs text-[var(--muted-foreground)] italic">
+                    No tags configured yet. You can type tags manually below or configure defaults in Settings → Tags &amp; Preferences.
+                  </p>
+                )}
+
+                {/* Add Custom Request / Tag input */}
+                <div className="flex items-center gap-2 mt-2.5">
+                  <Input
+                    placeholder="+ Type custom tag and press Enter"
+                    value={customTagInput}
+                    onChange={e => setCustomTagInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomTag();
+                      }
+                    }}
+                    className="h-8 text-xs flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleAddCustomTag}
+                    disabled={!customTagInput.trim()}
+                    className="h-8 px-2.5 text-xs flex items-center gap-1 shrink-0"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add
+                  </Button>
                 </div>
               </div>
             </div>
@@ -897,6 +1146,16 @@ export const NewReservationModal: React.FC = () => {
                   <span className="text-[var(--muted-foreground)]">Direct Source:</span>
                   <span className="font-semibold">{bookingSource}</span>
                 </div>
+                {(purposeOfVisit || city || stateRegion) && (
+                  <div className="flex justify-between">
+                    <span className="text-[var(--muted-foreground)]">Trip &amp; Origin:</span>
+                    <span className="font-semibold text-right">
+                      {purposeOfVisit}
+                      {city ? ` • ${city}` : ''}
+                      {stateRegion ? `, ${stateRegion}` : ''}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-[var(--muted-foreground)]">Subtotal ({nights} × {formatCurrency(nightlyRate)}):</span>
                   <span>{formatCurrency(subtotal)}</span>
@@ -905,6 +1164,18 @@ export const NewReservationModal: React.FC = () => {
                   <span className="text-[var(--muted-foreground)]">GST ({nightlyRate >= 7500 ? '18%' : '12%'}):</span>
                   <span>{formatCurrency(gstTax)}</span>
                 </div>
+                {specialRequests.length > 0 && (
+                  <div className="pt-2 border-t border-[var(--border)]">
+                    <span className="text-[11px] text-[var(--muted-foreground)] block mb-1 font-medium">Selected Requests & Tags:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {specialRequests.map(r => (
+                        <span key={r} className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="pt-2 border-t border-[var(--border)] flex justify-between text-base font-black">
                   <span>Grand Total:</span>
                   <span className="text-[var(--primary)]">{formatCurrency(grandTotal)}</span>
