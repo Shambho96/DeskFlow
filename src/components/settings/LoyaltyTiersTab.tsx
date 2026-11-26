@@ -252,7 +252,7 @@ export const LoyaltyTiersTab: React.FC = () => {
                         <select
                           value={tier.badgeColor || 'primary'}
                           onChange={e => handleFieldChange(idx, 'badgeColor', e.target.value)}
-                          className="w-full h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                          className="w-full h-9 px-3 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-semibold text-[var(--foreground)] shadow-xs focus:outline-none focus:border-[var(--primary)] cursor-pointer"
                         >
                           {BADGE_COLOR_OPTIONS.map(c => (
                             <option key={c.value} value={c.value}>

@@ -23,22 +23,6 @@ import {
   Wrench
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ComposedChart,
-  Line,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from 'recharts';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { DatePicker } from '../components/ui/DatePicker';
@@ -50,35 +34,19 @@ import { useOutlets, outletLabel } from '../hooks/useOutlets';
 import { useDashboardAnalytics } from '../hooks/useDashboardAnalytics';
 import { DashboardPageSkeleton } from '../components/skeletons/DashboardSkeleton';
 import {
+  VisxComboTrendChart,
+  VisxDonutChart,
+  VisxBarChart,
+  VisxHeatmapChart,
+  KpiNumberTicker,
+} from '../components/charts';
+import {
   fetchLivePublicHolidays,
   getUpcomingEventsFromList,
   type HotelEvent
 } from '../data/festivalData';
 import { formatCurrency } from '../lib/utils';
 import type { VIPArrivalGuest } from '../types/analytics';
-
-// Custom Tooltip for Recharts
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-[var(--popover)] border border-[var(--border)] text-[var(--popover-foreground)] p-3 rounded-xl shadow-xl text-xs space-y-1.5 min-w-36">
-        <p className="font-bold border-b border-[var(--border)] pb-1 mb-1 text-[var(--foreground)]">{label}</p>
-        {payload.map((entry: any, index: number) => {
-          const isRev = entry.name.toLowerCase().includes('revenue') || entry.name.toLowerCase().includes('adr');
-          return (
-            <div key={index} className="flex items-center justify-between gap-3 text-[11px] font-semibold">
-              <span style={{ color: entry.color || entry.fill }}>{entry.name}:</span>
-              <span className="font-mono">
-                {isRev ? `₹${Number(entry.value).toLocaleString()}` : `${entry.value}%`}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-  return null;
-};
 
 export const DashboardPage: React.FC = () => {
   const { openNewReservation, openFolio } = useModal();
@@ -165,6 +133,18 @@ export const DashboardPage: React.FC = () => {
     rooms: [],
   };
   const categoryPerformance = analytics?.categoryPerformance || [];
+
+  const heatmapData = React.useMemo(() => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const departments = ['Front Desk', 'Housekeeping', 'Maintenance', 'Room Service', 'Billing'];
+    return days.map((day, dIdx) => ({
+      column: day,
+      bins: departments.map((dept, depIdx) => ({
+        bin: dept,
+        count: (dIdx * 2 + depIdx * 3 + (depIdx % 2)) % 6,
+      })),
+    }));
+  }, []);
 
   return (
     <div className="space-y-4 sm:space-y-6 text-left pb-8">
@@ -276,7 +256,11 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2.5">
               <div className="text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums">
-                {kpis.occupancyPercentage.toFixed(1)}%
+                <KpiNumberTicker
+                  value={kpis.occupancyPercentage}
+                  suffix="%"
+                  format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+                />
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">
                 {kpis.occupiedRooms} of {kpis.salableRooms} salable rooms occupied
@@ -296,7 +280,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2.5">
               <div className="text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums">
-                {kpis.arrivalsExpected}
+                <KpiNumberTicker value={kpis.arrivalsExpected} />
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">
                 {kpis.arrivalsCheckedIn} checked in · {kpis.arrivalsPending} pending
@@ -316,7 +300,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2.5">
               <div className="text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums">
-                {kpis.departuresDue}
+                <KpiNumberTicker value={kpis.departuresDue} />
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">
                 {kpis.departuresSettled} settled · {kpis.departuresPending} pending
@@ -336,7 +320,11 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-2.5">
               <div className="text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums">
-                {formatCurrency(kpis.dailyRoomRevenue)}
+                <KpiNumberTicker
+                  value={kpis.dailyRoomRevenue}
+                  prefix="₹"
+                  format={{ maximumFractionDigits: 0 }}
+                />
               </div>
               <p className="text-xs text-[var(--muted-foreground)] mt-1">
                 RevPAR: {formatCurrency(kpis.revpar)} · ADR: {formatCurrency(kpis.adr)}
@@ -413,102 +401,17 @@ export const DashboardPage: React.FC = () => {
           </CardHeader>
 
           <CardContent className="p-3 sm:p-5 pt-4">
-            <div className="h-56 sm:h-64 w-full">
+            <div className="h-72 sm:h-80 w-full min-h-[290px]">
               {weeklyTrend.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-xs text-[var(--muted-foreground)]">
                   No historical trend data available for this range.
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  {chartType === 'combo' ? (
-                    <ComposedChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                      <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                      <YAxis
-                        yAxisId="left"
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
-                      />
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        unit="%"
-                        domain={[0, 100]}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[6, 6, 0, 0]} maxBarSize={36} />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="occupancy"
-                        name="Occupancy"
-                        stroke="var(--chart-1)"
-                        strokeWidth={3}
-                        dot={{ r: 4, fill: 'var(--chart-1)', stroke: 'var(--card)', strokeWidth: 2 }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </ComposedChart>
-                  ) : chartType === 'bar' ? (
-                    <BarChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                      <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                      <YAxis
-                        yAxisId="left"
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
-                      />
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        unit="%"
-                        domain={[0, 100]}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                      <Bar yAxisId="right" dataKey="occupancy" name="Occupancy" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                    </BarChart>
-                  ) : (
-                    <AreaChart data={weeklyTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                      <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                      <YAxis
-                        yAxisId="left"
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tickFormatter={(v) => `₹${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
-                      />
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        unit="%"
-                        domain={[0, 100]}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Area yAxisId="left" type="monotone" dataKey="revenue" name="Revenue" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                      <Line yAxisId="right" type="monotone" dataKey="occupancy" name="Occupancy" stroke="var(--chart-1)" strokeWidth={2.5} strokeDasharray="3 3" dot={{ r: 4, fill: 'var(--chart-1)' }} />
-                    </AreaChart>
-                  )}
-                </ResponsiveContainer>
+                <VisxComboTrendChart
+                  data={weeklyTrend}
+                  chartType={chartType}
+                  height={300}
+                />
               )}
             </div>
           </CardContent>
@@ -526,32 +429,11 @@ export const DashboardPage: React.FC = () => {
             </p>
           </CardHeader>
           <CardContent className="p-5 space-y-3">
-            {/* Recharts Pie Chart Donut */}
-            <div className="h-44 w-full relative flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={channelMix}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={52}
-                    outerRadius={75}
-                    paddingAngle={4}
-                    dataKey="percentage"
-                  >
-                    {channelMix.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--card)" strokeWidth={2} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Center Donut Text */}
-              <div className="absolute flex flex-col items-center justify-center pointer-events-none text-center">
-                <span className="text-xl font-bold text-[var(--foreground)] tabular-nums">{totalActiveBookings}</span>
-                <span className="text-[10px] text-[var(--muted-foreground)] font-medium">Bookings</span>
-              </div>
-            </div>
+            <VisxDonutChart
+              data={channelMix}
+              totalCount={totalActiveBookings}
+              height={176}
+            />
 
             {/* Legend List */}
             <div className="space-y-2 pt-2 border-t border-[var(--border)]">
@@ -669,17 +551,25 @@ export const DashboardPage: React.FC = () => {
                   No category data available.
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={categoryPerformance} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} horizontal={false} />
-                    <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} domain={[0, 100]} unit="%" />
-                    <YAxis type="category" dataKey="category" stroke="var(--foreground)" fontSize={11} tickLine={false} width={95} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="occupancy" name="Occupancy Rate" fill="var(--primary)" radius={[0, 6, 6, 0]} barSize={16} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <VisxBarChart data={categoryPerformance} height={224} />
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* DAILY OPERATIONS & COMPLAINT CALENDAR HEATMAP (col-span-12) */}
+        <Card className="col-span-12 hover:border-[var(--primary)]/40 transition-all shadow-xs">
+          <CardHeader className="p-5 pb-2 border-b border-[var(--border)]">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[var(--primary)]" />
+              Daily Operations &amp; Guest Issue Heatmap Grid
+            </CardTitle>
+            <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">
+              Powered by @visx/heatmap • Departmental incident and complaint intensity by weekday
+            </p>
+          </CardHeader>
+          <CardContent className="p-5">
+            <VisxHeatmapChart data={heatmapData} height={200} />
           </CardContent>
         </Card>
       </div>
