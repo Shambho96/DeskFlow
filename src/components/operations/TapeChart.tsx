@@ -40,10 +40,6 @@ export const TapeChart: React.FC<TapeChartProps> = ({
   const rooms = tapeChart?.rooms || [];
   const reservations = tapeChart?.reservations || [];
 
-  if (isLoading && rooms.length === 0) {
-    return <TapeChartSkeleton />;
-  }
-
   // Generate 7 consecutive days starting from selectedDate
   const days = useMemo(() => {
     const list: Array<{
@@ -74,6 +70,28 @@ export const TapeChart: React.FC<TapeChartProps> = ({
     }
     return list;
   }, [selectedDate]);
+
+  // Group rooms by Floor
+  const roomsByFloor = useMemo(() => {
+    const map = new Map<number | string, OperationsBoardRoom[]>();
+    rooms.forEach(rm => {
+      let floorKey: number | string = rm.floorId;
+      if (!floorKey) {
+        const match = rm.roomNumber.match(/^(\d)/);
+        floorKey = match ? parseInt(match[1]) : 1;
+      }
+      if (!map.has(floorKey)) {
+        map.set(floorKey, []);
+      }
+      map.get(floorKey)!.push(rm);
+    });
+
+    const sorted = Array.from(map.entries()).sort((a, b) => Number(a[0]) - Number(b[0]));
+    sorted.forEach(([_, rms]) => {
+      rms.sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true }));
+    });
+    return sorted;
+  }, [rooms]);
 
   const stepSevenDays = (delta: number) => {
     const [y, m, d] = selectedDate.split('-').map(Number);
@@ -128,27 +146,9 @@ export const TapeChart: React.FC<TapeChartProps> = ({
     }
   };
 
-  // Group rooms by Floor
-  const roomsByFloor = useMemo(() => {
-    const map = new Map<number | string, OperationsBoardRoom[]>();
-    rooms.forEach(rm => {
-      let floorKey: number | string = rm.floorId;
-      if (!floorKey) {
-        const match = rm.roomNumber.match(/^(\d)/);
-        floorKey = match ? parseInt(match[1]) : 1;
-      }
-      if (!map.has(floorKey)) {
-        map.set(floorKey, []);
-      }
-      map.get(floorKey)!.push(rm);
-    });
-
-    const sorted = Array.from(map.entries()).sort((a, b) => Number(a[0]) - Number(b[0]));
-    sorted.forEach(([_, rms]) => {
-      rms.sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true }));
-    });
-    return sorted;
-  }, [rooms]);
+  if (isLoading && rooms.length === 0) {
+    return <TapeChartSkeleton />;
+  }
 
   // Compute fractional placement for continuous tape chart bars
   const getRoomBars = (roomId: number): BarPlacement[] => {

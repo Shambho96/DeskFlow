@@ -146,7 +146,7 @@ export const PreferencesTab: React.FC = () => {
                 <select
                   value={currency}
                   onChange={e => setCurrency(e.target.value)}
-                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] h-[38px] cursor-pointer"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] h-9 shadow-xs cursor-pointer"
                 >
                   <option value="INR">₹ INR — Indian Rupee (Default)</option>
                   <option value="USD">$ USD — United States Dollar</option>
@@ -163,7 +163,7 @@ export const PreferencesTab: React.FC = () => {
                 <select
                   value={dateFormat}
                   onChange={e => setDateFormat(e.target.value)}
-                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] h-[38px] cursor-pointer"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] h-9 shadow-xs cursor-pointer"
                 >
                   <option value="DD_MMM_YYYY">15 Nov 2026 (Standard India / UK)</option>
                   <option value="DD_MM_YYYY">15/11/2026 (DD/MM/YYYY)</option>
@@ -179,7 +179,7 @@ export const PreferencesTab: React.FC = () => {
                 <select
                   value={timezone}
                   onChange={e => setTimezone(e.target.value)}
-                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] h-[38px] cursor-pointer"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] h-9 shadow-xs cursor-pointer"
                 >
                   <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
                   <option value="Asia/Dubai">Asia/Dubai (GST +4:00)</option>

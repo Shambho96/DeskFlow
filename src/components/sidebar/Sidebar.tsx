@@ -12,6 +12,10 @@ import {
   Search,
   Check,
   LogOut,
+  UtensilsCrossed,
+  ChefHat,
+  LayoutGrid,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useHotel } from '../../context/HotelContext';
@@ -38,11 +42,13 @@ interface NavItemProps {
   icon: React.ElementType;
   label: string;
   isCollapsed: boolean;
+  end?: boolean;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isCollapsed }) => (
+const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isCollapsed, end }) => (
   <NavLink
     to={to}
+    end={end ?? (to === '/app/pos')}
     title={isCollapsed ? label : undefined}
     className={({ isActive }) =>
       cn(
@@ -317,12 +323,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   return (
     <aside
       className={cn(
-        'bg-[var(--sidebar)] border-l border-[var(--border)] flex flex-col justify-between select-none h-full shrink-0 transition-all duration-300 rounded-tl-[2rem] rounded-bl-[2rem] overflow-hidden',
+        'bg-[var(--sidebar)] flex flex-col select-none h-full shrink-0 transition-all duration-300 overflow-hidden',
         isCollapsed ? 'w-16' : 'w-60'
       )}
     >
-      <div className="flex flex-col min-h-0">
-
+      {/* ── Top Header: Brand Logo & Outlet Switcher (Fixed) ───────────── */}
+      <div className="shrink-0 flex flex-col">
         {/* ── Brand Logo ──────────────────────────────────────────────────── */}
         <div
           onClick={() => navigate('/app/dashboard')}
@@ -358,11 +364,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
 
         {/* ── Divider ─────────────────────────────────────────────────────── */}
         <div className="mx-3 mb-1 border-t border-[var(--sidebar-border)]" />
+      </div>
 
+      {/* ── Scrollable Navigation Section (Smooth Scrolling) ────────────── */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1 space-y-2">
         {/* ── Main Navigation ─────────────────────────────────────────────── */}
-        <div className="px-3 py-2 space-y-0.5">
+        <div className="px-3 space-y-0.5">
           {!isCollapsed && (
-            <span className="px-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] block mb-1.5 mt-1">
+            <span className="px-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] block mb-1.5 mt-0.5">
               Main
             </span>
           )}
@@ -373,8 +382,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
           <NavItem to="/app/reports"    icon={BarChart3}        label="Reports"        isCollapsed={isCollapsed} />
         </div>
 
+        {/* ── Dining & POS ─────────────────────────────────────────────────── */}
+        <div className="px-3 space-y-0.5">
+          {!isCollapsed && (
+            <span className="px-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] block mb-1.5">
+              Dining &amp; Kitchen
+            </span>
+          )}
+          <NavItem to="/app/pos" icon={UtensilsCrossed} label="Point of Sale" isCollapsed={isCollapsed} end />
+          <NavItem to="/app/kds" icon={ChefHat} label="Kitchen (KDS)" isCollapsed={isCollapsed} />
+          <NavItem to="/app/pos/tables" icon={LayoutGrid} label="Tables &amp; Floors" isCollapsed={isCollapsed} />
+          <NavItem to="/app/pos/menu" icon={BookOpen} label="Menu &amp; Pricing" isCollapsed={isCollapsed} />
+        </div>
+
         {/* ── System ──────────────────────────────────────────────────────── */}
-        <div className="px-3 py-2 space-y-0.5 mt-1">
+        <div className="px-3 space-y-0.5">
           {!isCollapsed && (
             <span className="px-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--muted-foreground)] block mb-1.5">
               System
@@ -384,8 +406,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
         </div>
       </div>
 
-      {/* ── Bottom: User Profile & Logout Button ─────────────────────────────── */}
-      <div className="shrink-0 p-3 border-t border-[var(--sidebar-border)]">
+      {/* ── Bottom: User Profile & Logout Button (Fixed) ────────────────── */}
+      <div className="shrink-0 p-3 border-t border-[var(--sidebar-border)] bg-[var(--sidebar)]">
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-2">
             <img

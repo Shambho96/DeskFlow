@@ -125,7 +125,7 @@ export const HousekeepingHub: React.FC<HousekeepingHubProps> = ({
         {/* Floor Filter using Shadcn Select */}
         <div className="w-44">
           <Select value={selectedFloorId} onValueChange={onFloorChange}>
-            <SelectTrigger className="h-8 text-xs font-semibold rounded-xl">
+            <SelectTrigger className="h-9 text-xs font-semibold rounded-xl">
               <Layers className="w-3.5 h-3.5 mr-1 text-[var(--primary)] shrink-0" />
               <SelectValue placeholder="All Floors" />
             </SelectTrigger>

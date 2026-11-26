@@ -723,7 +723,7 @@ export const ReportCardModal: React.FC<ReportCardModalProps> = ({
                   <select
                     value={datePreset}
                     onChange={e => setDatePreset(e.target.value as DatePreset)}
-                    className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors h-[42px] cursor-pointer"
+                    className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-1.5 text-xs font-semibold text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors h-9 shadow-xs cursor-pointer"
                   >
                     {DATE_PRESET_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>
@@ -737,7 +737,7 @@ export const ReportCardModal: React.FC<ReportCardModalProps> = ({
                   <label className="block font-semibold text-[var(--foreground)] uppercase tracking-wider text-[11px]">
                     Group Pacing
                   </label>
-                  <div className="flex rounded-xl bg-[var(--muted)] p-1 border border-[var(--border)] h-[42px] items-center">
+                  <div className="flex rounded-xl bg-[var(--muted)] p-0.5 border border-[var(--border)] h-9 shadow-xs items-center">
                     {(['daily', 'weekly', 'monthly'] as GroupBy[]).map(g => (
                       <button
                         key={g}

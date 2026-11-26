@@ -12,22 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { ReportingChart } from '../charts';
 import { useReportExecution, downloadReportCSV } from '../../hooks/useReporting';
 import type { CustomReportCard } from '../../types/reporting';
 import { AVAILABLE_METRICS } from '../../types/reporting';
@@ -193,25 +178,6 @@ export const ReportCardItem: React.FC<ReportCardItemProps> = React.memo(({
     return periodStr;
   };
 
-  // Smart tick interval so labels have ample breathing room and never collide
-  const rowCount = reportData?.rows?.length ?? 0;
-  const xAxisInterval =
-    rowCount > 25
-      ? 3 // Show every 4th date on 30-day views
-      : rowCount > 14
-      ? 1 // Show every 2nd date on 15-25 day views
-      : 0; // Show all dates on short views
-
-  // Common Recharts Tooltip Props matching theme
-  const tooltipContentStyle = {
-    backgroundColor: 'var(--popover)',
-    borderColor: 'var(--border)',
-    borderRadius: '12px',
-    color: 'var(--popover-foreground)',
-    fontSize: '12px',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-  };
-
   return (
     <div
       ref={setNodeRef}
@@ -238,7 +204,7 @@ export const ReportCardItem: React.FC<ReportCardItemProps> = React.memo(({
             </button>
 
             {/* Custom Card Name */}
-            <h3 className="font-bold text-sm sm:text-base text-[var(--foreground)] tracking-tight truncate">
+            <h3 className="font-bold text-base sm:text-lg text-[var(--foreground)] tracking-tight truncate">
               {card.title}
             </h3>
           </div>
@@ -351,14 +317,16 @@ export const ReportCardItem: React.FC<ReportCardItemProps> = React.memo(({
           ) : (
             <>
               {/* Summary KPIs bar inside card */}
-              <div className="flex items-center gap-4 mb-4 pb-3 border-b border-[var(--border)] overflow-x-auto text-xs">
+              <div className="flex items-center gap-6 mb-4 pb-3 border-b border-[var(--border)] overflow-x-auto">
                 {selectedMetrics.map(mKey => {
                   const def = AVAILABLE_METRICS.find(m => m.key === mKey);
                   const total = reportData.meta.summary[mKey] ?? 0;
                   return (
-                    <div key={mKey} className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[var(--muted-foreground)]">{def?.label || mKey}:</span>
-                      <span className="font-bold text-[var(--foreground)] font-mono">
+                    <div key={mKey} className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs sm:text-sm font-medium text-[var(--muted-foreground)]">
+                        {def?.label || mKey}:
+                      </span>
+                      <span className="font-bold text-sm sm:text-base text-[var(--foreground)] font-mono">
                         {formatVal(total, mKey)}
                       </span>
                     </div>
@@ -405,161 +373,19 @@ export const ReportCardItem: React.FC<ReportCardItemProps> = React.memo(({
                     </tbody>
                   </table>
                 </div>
-              ) : card.chart_type === 'pie' || card.chart_type === 'donut' ? (
-                // Pie / Donut View
-                <div className="h-60 w-full flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Tooltip
-                        contentStyle={tooltipContentStyle}
-                        itemStyle={{ color: 'var(--popover-foreground)' }}
-                        labelStyle={{ color: 'var(--popover-foreground)', fontWeight: 600 }}
-                      />
-                      <Pie
-                        data={reportData.chart_series.map(s => ({
-                          name: s.name,
-                          value: reportData.meta.summary[s.metric_key] || 0,
-                          color: s.color,
-                        }))}
-                        innerRadius={card.chart_type === 'donut' ? 60 : 0}
-                        outerRadius={90}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {reportData.chart_series.map((s, idx) => (
-                          <Cell key={idx} fill={s.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : card.chart_type === 'line' ? (
-                // Line View
-                <div className="h-60 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={reportData.rows} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                      <XAxis
-                        dataKey="period"
-                        tickFormatter={formatXAxisPeriod}
-                        interval={xAxisInterval}
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tick={{ fill: 'currentColor' }}
-                        className="text-[var(--muted-foreground)]"
-                      />
-                      <YAxis
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tick={{ fill: 'currentColor' }}
-                        className="text-[var(--muted-foreground)]"
-                      />
-                      <Tooltip
-                        contentStyle={tooltipContentStyle}
-                        itemStyle={{ color: 'var(--popover-foreground)' }}
-                        labelStyle={{ color: 'var(--popover-foreground)', fontWeight: 600 }}
-                        labelFormatter={formatTooltipPeriod}
-                      />
-                      {reportData.chart_series.map(s => (
-                        <Line
-                          key={s.metric_key}
-                          type="monotone"
-                          dataKey={s.metric_key}
-                          name={s.name}
-                          stroke={s.color}
-                          strokeWidth={2.5}
-                          dot={{ r: 3, fill: s.color }}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : card.chart_type === 'area' ? (
-                // Area View
-                <div className="h-60 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={reportData.rows} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                      <XAxis
-                        dataKey="period"
-                        tickFormatter={formatXAxisPeriod}
-                        interval={xAxisInterval}
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tick={{ fill: 'currentColor' }}
-                        className="text-[var(--muted-foreground)]"
-                      />
-                      <YAxis
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tick={{ fill: 'currentColor' }}
-                        className="text-[var(--muted-foreground)]"
-                      />
-                      <Tooltip
-                        contentStyle={tooltipContentStyle}
-                        itemStyle={{ color: 'var(--popover-foreground)' }}
-                        labelStyle={{ color: 'var(--popover-foreground)', fontWeight: 600 }}
-                        labelFormatter={formatTooltipPeriod}
-                      />
-                      {reportData.chart_series.map(s => (
-                        <Area
-                          key={s.metric_key}
-                          type="monotone"
-                          dataKey={s.metric_key}
-                          name={s.name}
-                          stroke={s.color}
-                          fill={s.color}
-                          fillOpacity={0.2}
-                        />
-                      ))}
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
               ) : (
-                // Bar Chart (Default)
-                <div className="h-60 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={reportData.rows} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                      <XAxis
-                        dataKey="period"
-                        tickFormatter={formatXAxisPeriod}
-                        interval={xAxisInterval}
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tick={{ fill: 'currentColor' }}
-                        className="text-[var(--muted-foreground)]"
-                      />
-                      <YAxis
-                        stroke="var(--muted-foreground)"
-                        fontSize={11}
-                        tickLine={false}
-                        tick={{ fill: 'currentColor' }}
-                        className="text-[var(--muted-foreground)]"
-                      />
-                      <Tooltip
-                        contentStyle={tooltipContentStyle}
-                        itemStyle={{ color: 'var(--popover-foreground)' }}
-                        labelStyle={{ color: 'var(--popover-foreground)', fontWeight: 600 }}
-                        labelFormatter={formatTooltipPeriod}
-                      />
-                      {reportData.chart_series.map(s => (
-                        <Bar
-                          key={s.metric_key}
-                          dataKey={s.metric_key}
-                          name={s.name}
-                          fill={s.color}
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={40}
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className="w-full">
+                  <ReportingChart
+                    chartType={card.chart_type as any}
+                    rows={reportData.rows}
+                    series={reportData.chart_series}
+                    summaryMeta={reportData.meta.summary}
+                    height={250}
+                    formatXLabel={formatXAxisPeriod}
+                    formatTooltipLabel={formatTooltipPeriod}
+                    formatValue={formatVal}
+                    showFooterLegend={true}
+                  />
                 </div>
               )}
             </>

@@ -20,10 +20,15 @@ if [ -z "$STAGED_FILES" ]; then
   exit 0
 fi
 
-echo "Staged code files to verify:"
-for file in $STAGED_FILES; do
-  echo "  • $file"
-done
+STAGED_COUNT=$(echo "$STAGED_FILES" | wc -l | tr -d ' ')
+echo "Staged code files to verify: ($STAGED_COUNT files)"
+if [ "$STAGED_COUNT" -le 15 ]; then
+  for file in $STAGED_FILES; do
+    echo "  • $file"
+  done
+else
+  echo "  (Batch verifying $STAGED_COUNT staged files...)"
+fi
 echo ""
 
 # 2. Run TypeScript Static Type Check
@@ -43,10 +48,15 @@ fi
 echo "  ✅ [PASSED] TypeScript Type Check"
 echo ""
 
-# 3. Run Oxlint on Staged Files
+# 3. Run Oxlint on Staged Files (safely handle Windows CLI argument limit)
 echo "▶ Running Oxlint syntax & quality check on staged files..."
-npx oxlint $STAGED_FILES
-OXLINT_STATUS=$?
+if [ "$STAGED_COUNT" -le 15 ]; then
+  npx oxlint $STAGED_FILES
+  OXLINT_STATUS=$?
+else
+  npx oxlint
+  OXLINT_STATUS=$?
+fi
 
 if [ $OXLINT_STATUS -ne 0 ]; then
   echo ""

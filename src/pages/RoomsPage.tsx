@@ -1,21 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Layers,
-  PlusCircle,
   Sparkles,
   Plus,
-  Trash2,
-  RefreshCw,
-  Search,
-  CheckCircle2,
   BedDouble,
   Tag,
   Pencil,
   Building2,
-  GripVertical,
-  Clock,
-  Users,
-  DollarSign,
   ArrowUpDown,
   ChevronDown,
   ChevronRight,
@@ -23,13 +14,12 @@ import {
 } from 'lucide-react';
 import { useRooms } from '../hooks/useRooms';
 import { CampusLayoutSkeleton } from '../components/skeletons';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
 import { Popover, PopoverTrigger, PopoverContent } from '../components/ui/Popover';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
-import { formatCurrency, cn } from '../lib/utils';
+import { cn } from '../lib/utils';
 import { CreateCategoryModal } from '../components/rooms/CreateCategoryModal';
 import { CreateRoomModal } from '../components/rooms/CreateRoomModal';
 import { EditFloorModal } from '../components/rooms/EditFloorModal';
@@ -40,6 +30,13 @@ import { EditBuildingModal } from '../components/rooms/EditBuildingModal';
 import { CreateUtilityModal } from '../components/rooms/CreateUtilityModal';
 import { EditUtilityModal } from '../components/rooms/EditUtilityModal';
 import { RoomDetailDrawer } from '../components/rooms/RoomDetailDrawer';
+import { RoomKpiCards } from '../components/rooms/RoomKpiCards';
+import { CampusElevationView } from '../components/rooms/CampusElevationView';
+import { RoomCanvasPlan, type CanvasItem } from '../components/rooms/RoomCanvasPlan';
+import { RoomDirectoryTable } from '../components/rooms/RoomDirectoryTable';
+import { RoomCategoriesTab } from '../components/rooms/RoomCategoriesTab';
+import { RoomFacilitiesTab } from '../components/rooms/RoomFacilitiesTab';
+import { BulkRoomGeneratorTab } from '../components/rooms/BulkRoomGeneratorTab';
 import type {
   LiveRoomStatus,
   BackendFloor,
@@ -49,24 +46,7 @@ import type {
   BackendUtility
 } from '../types/hotel';
 
-export interface CanvasItem {
-  id: string;
-  floorId: string;
-  roomId?: string;
-  label: string;
-  shapeType: 'SQUARE' | 'CIRCLE' | 'DIAMOND' | 'PENTAGON' | 'OCTAGON' | 'COUNTER' | 'WALL' | 'DECOR' | 'ELEVATOR';
-  category?: 'ROOM' | 'ELEMENT';
-  x: number;
-  y: number;
-  typeId?: string;
-  categoryName?: string;
-  basePrice?: number;
-  status?: LiveRoomStatus;
-  isOccupied?: boolean;
-}
-
 export const RoomsPage: React.FC = () => {
-  // ─── Live Backend Hook ─────────────────────────────────────────────────────
   const {
     campusBuildings,
     buildings,
@@ -97,15 +77,12 @@ export const RoomsPage: React.FC = () => {
     deleteUtility,
   } = useRooms();
 
-  // ─── Building & Floor Selection ───────────────────────────────────────────
   const [activeBuildingId, setActiveBuildingId] = useState<'ALL' | number>('ALL');
-  // activeFloorId can be 'ALL' for Elevation Stack, or a specific floor id string
   const [activeFloorId, setActiveFloorId] = useState<string>('ALL');
   const [selectedDrawerRoom, setSelectedDrawerRoom] = useState<BackendRoom | null>(null);
   const [newItemPopoverOpen, setNewItemPopoverOpen] = useState(false);
   const [quickStatusFilter, setQuickStatusFilter] = useState<'ALL' | LiveRoomStatus>('ALL');
 
-  // Filtered floors based on active building
   const displayedFloors = useMemo(() => {
     if (activeBuildingId === 'ALL') return backendFloors;
     return backendFloors.filter(f => f.buildingId === activeBuildingId);
@@ -138,13 +115,13 @@ export const RoomsPage: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<BackendRoomCategory | null>(null);
   const [editingRoom, setEditingRoom] = useState<BackendRoom | null>(null);
 
-  // Drag and Drop state
+  // Drag and drop state
   const [draggingRoomId, setDraggingRoomId] = useState<number | null>(null);
   const [dragOverFloorId, setDragOverFloorId] = useState<number | null>(null);
   const [draggingFloorId, setDraggingFloorId] = useState<number | null>(null);
   const [dragOverFloorDropTarget, setDragOverFloorDropTarget] = useState<number | null>(null);
 
-  // Collapsible Building Views state
+  // Collapsible state
   const [collapsedBuildingIds, setCollapsedBuildingIds] = useState<Record<number, boolean>>({});
 
   const toggleBuildingCollapse = (bId: number) => {
@@ -169,7 +146,6 @@ export const RoomsPage: React.FC = () => {
 
   const handleToggleAllBuildings = () => {
     if (areAllBuildingsCollapsed) {
-      // Expand all visible buildings
       setCollapsedBuildingIds(prev => {
         const next = { ...prev };
         visibleCampusBuildings.forEach(cb => {
@@ -178,7 +154,6 @@ export const RoomsPage: React.FC = () => {
         return next;
       });
     } else {
-      // Collapse all visible buildings
       setCollapsedBuildingIds(prev => {
         const next = { ...prev };
         visibleCampusBuildings.forEach(cb => {
@@ -189,31 +164,8 @@ export const RoomsPage: React.FC = () => {
     }
   };
 
-  // Bulk Generator State
-  const [genFloorId, setGenFloorId] = useState<string>('');
-  const [genCategoryId, setGenCategoryId] = useState<string>('');
-  const [genStartNum, setGenStartNum] = useState<number>(101);
-  const [genEndNum, setGenEndNum] = useState<number>(110);
-  const [genPrefix, setGenPrefix] = useState<string>('');
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  useEffect(() => {
-    if (backendFloors.length > 0) {
-      setGenFloorId(prev => prev || String(backendFloors[0].id));
-    }
-    if (backendCategories.length > 0) {
-      setGenCategoryId(prev => prev || String(backendCategories[0].id));
-    }
-  }, [backendFloors, backendCategories]);
-
-  // Directory Table Filters
-  const [directorySearch, setDirectorySearch] = useState('');
-  const [directoryBuildingFilter, setDirectoryBuildingFilter] = useState<'ALL' | number>('ALL');
-  const [directoryFloorFilter, setDirectoryFloorFilter] = useState('ALL');
-  const [directoryStatusFilter, setDirectoryStatusFilter] = useState('ALL');
-
-  // ─── 2D Canvas State, Grid Snapping & Position Memory ──────────────────────
-  const [snapToGrid, setSnapToGrid] = useState(true);
+  // 2D Canvas State & Position Memory
+  const [snapToGrid] = useState(true);
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
@@ -222,7 +174,6 @@ export const RoomsPage: React.FC = () => {
   const hasMovedRef = useRef<boolean>(false);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // Position memory: persists room coordinates across renders and floor switches
   const [savedCanvasPositions, setSavedCanvasPositions] = useState<Record<string, { x: number; y: number }>>(() => {
     try {
       const stored = localStorage.getItem('hrm_canvas_room_positions');
@@ -242,52 +193,6 @@ export const RoomsPage: React.FC = () => {
     });
   };
 
-  const handleResetCanvasLayout = () => {
-    if (!activeFloorId || activeFloorId === 'ALL') return;
-    const currentFloor = backendFloors.find(f => String(f.id) === String(activeFloorId));
-    if (!currentFloor || !currentFloor.rooms) return;
-
-    const cols = 5;
-    const cardW = 152;
-    const cardH = 106;
-    const gapX = 24;
-    const gapY = 24;
-    const startX = 32;
-    const startY = 72;
-
-    const updatedSaved = { ...savedCanvasPositions };
-    const items: CanvasItem[] = currentFloor.rooms.map((rm, idx) => {
-      const col = idx % cols;
-      const row = Math.floor(idx / cols);
-      const x = startX + col * (cardW + gapX);
-      const y = startY + row * (cardH + gapY);
-      const id = `room-${rm.id}`;
-      updatedSaved[id] = { x, y };
-      return {
-        id,
-        floorId: String(currentFloor.id),
-        roomId: String(rm.id),
-        label: `Room ${rm.roomNumber}`,
-        shapeType: 'SQUARE',
-        category: 'ROOM',
-        x,
-        y,
-        typeId: rm.categoryId ? String(rm.categoryId) : undefined,
-        categoryName: rm.categoryName,
-        basePrice: rm.basePrice,
-        status: rm.status,
-        isOccupied: rm.status === 'OCCUPIED'
-      };
-    });
-
-    setSavedCanvasPositions(updatedSaved);
-    try {
-      localStorage.setItem('hrm_canvas_room_positions', JSON.stringify(updatedSaved));
-    } catch {}
-    setCanvasItems(items);
-  };
-
-  // Sync canvas items with active floor rooms from backend
   useEffect(() => {
     if (!activeFloorId || activeFloorId === 'ALL') {
       setCanvasItems([]);
@@ -334,9 +239,9 @@ export const RoomsPage: React.FC = () => {
     });
 
     setCanvasItems(items);
-  }, [activeFloorId, backendFloors]);
+  }, [activeFloorId, backendFloors, savedCanvasPositions]);
 
-  // Canvas drag handlers
+  // Canvas Drag Handlers
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!draggingItemId || !canvasRef.current) return;
@@ -386,7 +291,25 @@ export const RoomsPage: React.FC = () => {
     };
   }, [draggingItemId, dragOffset, snapToGrid, canvasItems]);
 
-  // ─── Actions ─────────────────────────────────────────────────────────────
+  const handleNodeMouseDown = (e: React.MouseEvent, item: CanvasItem) => {
+    e.stopPropagation();
+    if (!canvasRef.current) return;
+    const container = canvasRef.current;
+    const rect = container.getBoundingClientRect();
+
+    setSelectedItemId(item.id);
+    setDraggingItemId(item.id);
+    dragStartPosRef.current = { x: e.clientX, y: e.clientY };
+    hasMovedRef.current = false;
+
+    const mouseCanvasX = (e.clientX - rect.left) + container.scrollLeft;
+    const mouseCanvasY = (e.clientY - rect.top) + container.scrollTop;
+
+    setDragOffset({
+      x: mouseCanvasX - item.x,
+      y: mouseCanvasY - item.y
+    });
+  };
 
   const handleCreateFloor = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -437,6 +360,17 @@ export const RoomsPage: React.FC = () => {
     }
   };
 
+  const handleCycleRoomStatus = async (rm: BackendRoom) => {
+    const statusOrder: LiveRoomStatus[] = ['AVAILABLE', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'];
+    const currentIdx = statusOrder.indexOf(rm.status);
+    const nextStatus = statusOrder[(currentIdx + 1) % statusOrder.length];
+    try {
+      await apiUpdateRoomStatus(rm.id, nextStatus);
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update room status');
+    }
+  };
+
   const handleDeleteRoom = async (roomId: number, roomNumber: string) => {
     if (!confirm(`Are you sure you want to delete room "${roomNumber}"?`)) return;
     try {
@@ -448,7 +382,7 @@ export const RoomsPage: React.FC = () => {
   };
 
   const handleDeleteCategory = async (catId: number, catName: string) => {
-    if (!confirm(`Are you sure you want to delete category "${catName}"?`)) return;
+    if (!confirm(`Delete category "${catName}"? Rooms assigned will keep baseline rates.`)) return;
     try {
       await deleteRoomCategory(catId);
     } catch (err: any) {
@@ -456,70 +390,6 @@ export const RoomsPage: React.FC = () => {
     }
   };
 
-  const handleUpdateStatus = async (roomId: number, newStatus: LiveRoomStatus) => {
-    try {
-      await apiUpdateRoomStatus(roomId, newStatus);
-    } catch (err: any) {
-      alert(err?.message || 'Failed to update room status');
-    }
-  };
-
-  const handleDrawerUpdateStatus = async (roomId: number, newStatus: LiveRoomStatus) => {
-    await handleUpdateStatus(roomId, newStatus);
-    setSelectedDrawerRoom(prev => (prev && prev.id === roomId ? { ...prev, status: newStatus } : prev));
-  };
-
-  const handleBulkGenerateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!genFloorId || !genCategoryId) {
-      alert('Please select both a floor and a category.');
-      return;
-    }
-    if (genStartNum > genEndNum) {
-      alert('Start room number cannot be greater than end room number.');
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const res = await createBulkRooms({
-        floorId: Number(genFloorId),
-        categoryId: Number(genCategoryId),
-        startNumber: Number(genStartNum),
-        endNumber: Number(genEndNum),
-        prefix: genPrefix.trim() || undefined
-      });
-      alert(`🎉 ${res.message}`);
-      setActiveFloorId(String(genFloorId));
-    } catch (err: any) {
-      alert(err?.message || 'Failed to generate rooms');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Node Drag Start on Canvas
-  const handleNodeMouseDown = (e: React.MouseEvent, item: CanvasItem) => {
-    e.stopPropagation();
-    if (!canvasRef.current) return;
-    const container = canvasRef.current;
-    const rect = container.getBoundingClientRect();
-
-    setSelectedItemId(item.id);
-    setDraggingItemId(item.id);
-    dragStartPosRef.current = { x: e.clientX, y: e.clientY };
-    hasMovedRef.current = false;
-
-    const mouseCanvasX = (e.clientX - rect.left) + container.scrollLeft;
-    const mouseCanvasY = (e.clientY - rect.top) + container.scrollTop;
-
-    setDragOffset({
-      x: mouseCanvasX - item.x,
-      y: mouseCanvasY - item.y
-    });
-  };
-
-  // ─── Free-Hand Floor Reordering (Physical Elevation: Lowest at Bottom) ─────
   const handleFloorDrop = async (targetFloor: BackendFloor, buildingFloors: BackendFloor[]) => {
     if (!draggingFloorId || draggingFloorId === targetFloor.id) {
       setDraggingFloorId(null);
@@ -527,9 +397,7 @@ export const RoomsPage: React.FC = () => {
       return;
     }
 
-    // Sort current floors by floorNumber ascending (Option 1: 1 = lowest floor, N = highest floor)
     const sortedFloors = [...buildingFloors].sort((a, b) => a.floorNumber - b.floorNumber);
-
     const fromIdx = sortedFloors.findIndex(f => f.id === draggingFloorId);
     const toIdx = sortedFloors.findIndex(f => f.id === targetFloor.id);
 
@@ -539,11 +407,8 @@ export const RoomsPage: React.FC = () => {
       return;
     }
 
-    // Move floor in array
     const [moved] = sortedFloors.splice(fromIdx, 1);
     sortedFloors.splice(toIdx, 0, moved);
-
-    // Bottom to top ids: index 0 = lowest floor (Level 1), index N-1 = highest floor (Level N)
     const bottomToTopIds = sortedFloors.map(f => f.id);
 
     setDraggingFloorId(null);
@@ -560,7 +425,6 @@ export const RoomsPage: React.FC = () => {
     }
   };
 
-  // ─── Free-Hand Room Drag-and-Drop Across Floors ─────────────────────────────
   const handleRoomDropOnFloor = async (targetFloorId: number) => {
     if (!draggingRoomId) {
       setDragOverFloorId(null);
@@ -585,32 +449,9 @@ export const RoomsPage: React.FC = () => {
     }
   };
 
-  // ─── Filtered Room Directory List ─────────────────────────────────────────
-  const filteredDirectoryRooms = useMemo(() => {
-    return backendRooms.filter(rm => {
-      const matchesSearch =
-        rm.roomNumber.toLowerCase().includes(directorySearch.toLowerCase()) ||
-        rm.categoryName.toLowerCase().includes(directorySearch.toLowerCase()) ||
-        (rm.customName && rm.customName.toLowerCase().includes(directorySearch.toLowerCase())) ||
-        rm.floorName.toLowerCase().includes(directorySearch.toLowerCase());
-
-      const matchesBuilding =
-        directoryBuildingFilter === 'ALL' || rm.buildingId === directoryBuildingFilter;
-
-      const matchesFloor =
-        directoryFloorFilter === 'ALL' || String(rm.floorId) === String(directoryFloorFilter);
-
-      const matchesStatus =
-        directoryStatusFilter === 'ALL' || rm.status === directoryStatusFilter;
-
-      return matchesSearch && matchesBuilding && matchesFloor && matchesStatus;
-    });
-  }, [backendRooms, directorySearch, directoryBuildingFilter, directoryFloorFilter, directoryStatusFilter]);
-
   const activeFloor = backendFloors.find(f => String(f.id) === String(activeFloorId));
   const activeFloorRooms = activeFloor?.rooms || [];
 
-  // ─── Metrics Calculation ──────────────────────────────────────────────────
   const totalRoomsCount = layout?.totalRooms ?? backendRooms.length;
   const availableRoomsCount = layout?.availableRooms ?? backendRooms.filter(r => r.status === 'AVAILABLE').length;
   const occupiedRoomsCount = layout?.occupiedRooms ?? backendRooms.filter(r => r.status === 'OCCUPIED').length;
@@ -621,95 +462,17 @@ export const RoomsPage: React.FC = () => {
   return (
     <div className="space-y-4 text-left select-none pb-8 font-sans">
       {/* ─── 4 THEMED GLANCEABLE KPI STAT CARDS ──────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {/* Card 1: Total Inventory */}
-        <div className="p-3.5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs transition-all hover:border-[var(--primary)]/40 hover:shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] flex items-center gap-1.5">
-              <BedDouble className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
-              <span>Total Inventory</span>
-            </span>
-            <div className="w-6 h-6 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] shrink-0">
-              <Layers className="w-3 h-3" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[var(--foreground)] font-mono tracking-tight">
-              {totalRoomsCount}
-            </span>
-            <span className="text-xs font-medium text-[var(--muted-foreground)]">rooms</span>
-          </div>
-          <div className="text-[10px] text-[var(--muted-foreground)] mt-1 truncate">
-            {buildings.length} Wings • {layout?.totalFloors ?? backendFloors.length} Floors
-          </div>
-        </div>
-
-        {/* Card 2: Available (Ready) */}
-        <div className="p-3.5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs transition-all hover:border-[var(--primary)]/40 hover:shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
-              <span>Available (Ready)</span>
-            </span>
-            <div className="w-6 h-6 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] shrink-0">
-              <CheckCircle2 className="w-3 h-3" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[var(--foreground)] font-mono tracking-tight">
-              {availableRoomsCount}
-            </span>
-            <span className="text-xs font-medium text-[var(--muted-foreground)]">vacant</span>
-          </div>
-          <div className="text-[10px] text-[var(--muted-foreground)] mt-1 truncate">
-            Ready for instant check-in
-          </div>
-        </div>
-
-        {/* Card 3: In-House Occupied */}
-        <div className="p-3.5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs transition-all hover:border-[var(--primary)]/40 hover:shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
-              <span>In-House Occupied</span>
-            </span>
-            <div className="w-6 h-6 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] shrink-0">
-              <Building2 className="w-3 h-3" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[var(--foreground)] font-mono tracking-tight">
-              {occupiedRoomsCount}
-            </span>
-            <span className="text-xs font-medium text-[var(--muted-foreground)]">active</span>
-          </div>
-          <div className="text-[10px] text-[var(--muted-foreground)] mt-1 truncate">
-            Currently checked-in guests
-          </div>
-        </div>
-
-        {/* Card 4: Needs Attention */}
-        <div className="p-3.5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-xs transition-all hover:border-[var(--primary)]/40 hover:shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] flex items-center gap-1.5">
-              <RefreshCw className="w-3.5 h-3.5 text-[var(--primary)] shrink-0" />
-              <span>Needs Attention</span>
-            </span>
-            <div className="w-6 h-6 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] shrink-0">
-              <Sparkles className="w-3 h-3" />
-            </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[var(--foreground)] font-mono tracking-tight">
-              {attentionRoomsCount}
-            </span>
-            <span className="text-xs font-medium text-[var(--muted-foreground)]">units</span>
-          </div>
-          <div className="text-[10px] text-[var(--muted-foreground)] mt-1 truncate">
-            {cleaningRoomsCount} Cleaning • {maintenanceRoomsCount} Maintenance
-          </div>
-        </div>
-      </div>
+      <RoomKpiCards
+        totalRoomsCount={totalRoomsCount}
+        availableRoomsCount={availableRoomsCount}
+        occupiedRoomsCount={occupiedRoomsCount}
+        attentionRoomsCount={attentionRoomsCount}
+        cleaningRoomsCount={cleaningRoomsCount}
+        maintenanceRoomsCount={maintenanceRoomsCount}
+        buildings={buildings}
+        backendFloors={backendFloors}
+        totalFloors={layout?.totalFloors}
+      />
 
       {/* ─── PAGE HEADER & UNIFIED ACTION BAR ───────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -808,1495 +571,384 @@ export const RoomsPage: React.FC = () => {
       {isLoading && buildings.length === 0 ? (
         <CampusLayoutSkeleton />
       ) : (
-      <Tabs defaultValue="visual" className="w-full">
-        <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-auto gap-0 overflow-x-auto no-scrollbar">
-          <TabsTrigger
-            value="visual"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
-          >
-            Floor Elevation ({backendRooms.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="list"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
-          >
-            Room Directory ({backendRooms.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="categories"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
-          >
-            Pricing &amp; Categories ({backendCategories.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="facilities"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
-          >
-            Campus Facilities ({backendUtilities.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="generator"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
-          >
-            Bulk Generator
-          </TabsTrigger>
-        </TabsList>
-
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        {/* TAB 1: CAMPUS SPACE DESIGNER & ELEVATION VIEW                        */}
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="visual" className="pt-3 space-y-4">
-          {/* ─── BUILDING WINGS SELECTOR PILLS BAR ────────────────────────────── */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-            <button
-              type="button"
-              onClick={() => handleSelectBuilding('ALL')}
-              className={cn(
-                "h-8 px-3 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer",
-                activeBuildingId === 'ALL'
-                  ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-xs"
-                  : "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)]/50"
-              )}
+        <Tabs defaultValue="visual" className="w-full">
+          <TabsList className="w-full justify-start border-b border-[var(--border)] rounded-none bg-transparent p-0 h-auto gap-0 overflow-x-auto no-scrollbar">
+            <TabsTrigger
+              value="visual"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
             >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>All Wings</span>
-              <span className={cn(
-                "ml-1 px-1.5 py-0.2 rounded-md font-mono text-[10px]",
-                activeBuildingId === 'ALL' ? "bg-white/20 text-white" : "bg-[var(--muted)] text-[var(--muted-foreground)]"
-              )}>
-                {backendRooms.length}
-              </span>
-            </button>
-
-            {buildings.map(b => {
-              const isSelected = activeBuildingId === b.id;
-              return (
-                <div
-                  key={b.id}
-                  className={cn(
-                    "h-8 px-3 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer group",
-                    isSelected
-                      ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-xs"
-                      : "bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)]/50"
-                  )}
-                  onClick={() => handleSelectBuilding(b.id)}
-                >
-                  <span>{b.name}</span>
-                  <span className={cn(
-                    "px-1.5 py-0.2 rounded-md font-mono text-[10px]",
-                    isSelected ? "bg-white/20 text-white" : "bg-[var(--muted)] text-[var(--muted-foreground)]"
-                  )}>
-                    {b.roomCount}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingBuilding(b);
-                    }}
-                    className={cn(
-                      "p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity",
-                      isSelected ? "hover:bg-white/20 text-white" : "hover:bg-[var(--muted)] text-[var(--muted-foreground)]"
-                    )}
-                    title="Edit Wing"
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </button>
-                </div>
-              );
-            })}
-
-            <button
-              type="button"
-              onClick={() => setShowCreateBuildingModal(true)}
-              className="h-8 px-2.5 rounded-xl border border-dashed border-[var(--primary)]/40 hover:border-[var(--primary)] hover:bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-bold shrink-0 flex items-center gap-1 transition-colors cursor-pointer"
+              Floor Elevation ({backendRooms.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="list"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Wing</span>
-            </button>
-          </div>
+              Room Directory ({backendRooms.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="categories"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
+            >
+              Pricing &amp; Categories ({backendCategories.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="facilities"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
+            >
+              Campus Facilities ({backendUtilities.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="generator"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[var(--primary)] font-bold text-xs whitespace-nowrap px-3.5 py-2.5 cursor-pointer"
+            >
+              Bulk Generator
+            </TabsTrigger>
+          </TabsList>
 
-          {/* ─── STATUS FILTER BAR & ELEVATION CONTROLS ───────────────────────── */}
-          <div className="p-2.5 bg-[var(--card)] border border-[var(--border)] rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
-            {/* Quick Status Filter Pills */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] mr-1">Filter:</span>
-              {(['ALL', 'AVAILABLE', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'] as const).map(st => {
-                const isSelected = quickStatusFilter === st;
-                const count = st === 'ALL'
-                  ? backendRooms.filter(r => activeBuildingId === 'ALL' || r.buildingId === activeBuildingId).length
-                  : backendRooms.filter(r => (activeBuildingId === 'ALL' || r.buildingId === activeBuildingId) && r.status === st).length;
+          {/* TAB 1: VISUAL ELEVATION / 2D CANVAS */}
+          <TabsContent value="visual" className="pt-3 space-y-4">
+            {/* Building wings selector pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+              <button
+                type="button"
+                onClick={() => handleSelectBuilding('ALL')}
+                className={cn(
+                  'h-8 px-3 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer',
+                  activeBuildingId === 'ALL'
+                    ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-xs'
+                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)]/50'
+                )}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>All Wings</span>
+                <span className={cn(
+                  'ml-1 px-1.5 py-0.2 rounded-md font-mono text-[10px]',
+                  activeBuildingId === 'ALL' ? 'bg-white/20 text-white' : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                )}>
+                  {backendRooms.length}
+                </span>
+              </button>
 
-                let badgeColor = 'text-[var(--foreground)]';
-                if (st === 'AVAILABLE') badgeColor = 'text-[var(--primary)]';
-                if (st === 'OCCUPIED') badgeColor = 'text-[var(--foreground)]';
-                if (st === 'CLEANING') badgeColor = 'text-[var(--muted-foreground)]';
-                if (st === 'MAINTENANCE') badgeColor = 'text-[var(--destructive)]';
-
+              {buildings.map(b => {
+                const isSelected = activeBuildingId === b.id;
                 return (
-                  <button
-                    key={st}
-                    type="button"
-                    onClick={() => setQuickStatusFilter(st)}
+                  <div
+                    key={b.id}
                     className={cn(
-                      "px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                      'h-8 px-3 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer group',
                       isSelected
-                        ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-2xs"
-                        : "bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]"
+                        ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-xs'
+                        : 'bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)]/50'
                     )}
+                    onClick={() => handleSelectBuilding(b.id)}
                   >
-                    <span>{st === 'ALL' ? 'All' : st.charAt(0) + st.slice(1).toLowerCase()}</span>
+                    <span>{b.name}</span>
                     <span className={cn(
-                      "px-1 py-0.2 rounded text-[10px] font-mono",
-                      isSelected ? "bg-white/20 text-white" : badgeColor
+                      'px-1.5 py-0.2 rounded-md font-mono text-[10px]',
+                      isSelected ? 'bg-white/20 text-white' : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
                     )}>
-                      {count}
+                      {b.roomCount}
                     </span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingBuilding(b);
+                      }}
+                      className={cn(
+                        'p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer',
+                        isSelected ? 'hover:bg-white/20 text-white' : 'hover:bg-[var(--muted)] text-[var(--muted-foreground)]'
+                      )}
+                      title="Edit Wing"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  </div>
                 );
               })}
+
+              <button
+                type="button"
+                onClick={() => setShowCreateBuildingModal(true)}
+                className="h-8 px-2.5 rounded-xl border border-dashed border-[var(--primary)]/40 hover:border-[var(--primary)] hover:bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-bold shrink-0 flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Wing</span>
+              </button>
             </div>
 
-            {/* Right Controls: View Switcher & Floor Actions */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Elevation vs 2D Canvas Toggle */}
-              <div className="flex items-center rounded-xl bg-[var(--muted)]/50 p-0.5 border border-[var(--border)]">
-                <button
-                  type="button"
-                  onClick={() => setActiveFloorId('ALL')}
-                  className={cn(
-                    'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
-                    activeFloorId === 'ALL'
-                      ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-extrabold'
-                      : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                  )}
-                >
-                  <ArrowUpDown className="w-3.5 h-3.5 text-[var(--primary)]" />
-                  <span>Elevation</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeFloorId === 'ALL' && displayedFloors.length > 0) {
-                      setActiveFloorId(String(displayedFloors[0].id));
-                    }
-                  }}
-                  className={cn(
-                    'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
-                    activeFloorId !== 'ALL'
-                      ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-extrabold'
-                      : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                  )}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5 text-[var(--primary)]" />
-                  <span>2D Canvas</span>
-                </button>
-              </div>
+            {/* Quick Status Filters & Controls */}
+            <div className="p-2.5 bg-[var(--card)] border border-[var(--border)] rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] mr-1">Filter:</span>
+                {(['ALL', 'AVAILABLE', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'] as const).map(st => {
+                  const isSelected = quickStatusFilter === st;
+                  const count = st === 'ALL'
+                    ? backendRooms.filter(r => activeBuildingId === 'ALL' || r.buildingId === activeBuildingId).length
+                    : backendRooms.filter(r => (activeBuildingId === 'ALL' || r.buildingId === activeBuildingId) && r.status === st).length;
 
-              {/* Floor Level Selector (shown when in 2D Canvas mode) */}
-              {activeFloorId !== 'ALL' && displayedFloors.length > 0 && (
-                <div className="flex items-center gap-1.5 bg-[var(--muted)]/50 px-2 py-0.5 rounded-xl border border-[var(--border)]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Level:</span>
-                  <Select value={activeFloorId} onValueChange={setActiveFloorId}>
-                    <SelectTrigger className="h-7 text-xs font-bold rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] px-2 shadow-2xs w-auto min-w-[140px]">
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {displayedFloors.map(f => (
-                        <SelectItem key={f.id} value={String(f.id)}>
-                          L{f.floorNumber} — {f.name} ({f.rooms?.length || 0} rms)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Expand / Collapse All */}
-              {activeFloorId === 'ALL' && (
-                <button
-                  type="button"
-                  onClick={handleToggleAllBuildings}
-                  className="h-8 px-2.5 rounded-xl bg-[var(--background)] hover:bg-[var(--muted)] border border-[var(--border)] text-xs font-bold text-[var(--foreground)] transition-all flex items-center gap-1 cursor-pointer"
-                  title={areAllBuildingsCollapsed ? 'Expand all buildings' : 'Collapse all buildings'}
-                >
-                  {areAllBuildingsCollapsed ? (
-                    <>
-                      <ChevronDown className="w-3.5 h-3.5 text-[var(--primary)]" /> Expand
-                    </>
-                  ) : (
-                    <>
-                      <ChevronRight className="w-3.5 h-3.5 text-[var(--primary)]" /> Collapse
-                    </>
-                  )}
-                </button>
-              )}
-
-              {/* Add Floor Button / Form */}
-              {showAddFloorInput ? (
-                <form onSubmit={handleCreateFloor} className="flex items-center gap-1">
-                  <Input
-                    placeholder="Floor Name (e.g. Ground Floor)"
-                    value={newFloorName}
-                    onChange={e => setNewFloorName(e.target.value)}
-                    className="h-8 text-xs rounded-xl w-36"
-                    autoFocus
-                  />
-                  <Button type="submit" size="sm" className="h-8 text-xs font-bold rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 px-2.5">
-                    Save
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs rounded-xl px-2"
-                    onClick={() => setShowAddFloorInput(false)}
-                  >
-                    Cancel
-                  </Button>
-                </form>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowAddFloorInput(true)}
-                  className="h-8 text-xs font-bold rounded-xl border-[var(--border)] gap-1 text-[var(--foreground)]"
-                  title="Add Floor Level"
-                >
-                  <Plus className="w-3.5 h-3.5 text-[var(--primary)]" /> Add Floor
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* ═════════════════════════════════════════════════════════════════════ */}
-          {/* VIEW A: PHYSICAL BUILDING ELEVATION STACK (ALL FLOORS)                */}
-          {/* ═════════════════════════════════════════════════════════════════════ */}
-          {activeFloorId === 'ALL' ? (
-            <div className="space-y-6">
-
-
-              {/* Group by Building */}
-              {campusBuildings
-                .filter(cb => activeBuildingId === 'ALL' || cb.building.id === activeBuildingId)
-                .map(cb => {
-                  const isCollapsed = !!collapsedBuildingIds[cb.building.id];
-
-                  // compute status summary for this building
-                  const buildingRooms = (cb.floors || []).flatMap(f => f.rooms || []);
-                  const bAvailable = buildingRooms.filter(r => r.status === 'AVAILABLE').length;
-                  const bOccupied = buildingRooms.filter(r => r.status === 'OCCUPIED').length;
-                  const bCleaning = buildingRooms.filter(r => r.status === 'CLEANING').length;
-                  const bMaintenance = buildingRooms.filter(r => r.status === 'MAINTENANCE').length;
-
-                  // Sort floors according to Option 1:
-                  // Physical display: Penthouse/Rooftop on top (highest floorNumber), Ground level on bottom (lowest floorNumber)
-                  const buildingFloorsElevation = [...(cb.floors || [])].sort(
-                    (a, b) => b.floorNumber - a.floorNumber
-                  );
+                  let badgeColor = 'text-[var(--foreground)]';
+                  if (st === 'AVAILABLE') badgeColor = 'text-[var(--primary)]';
+                  if (st === 'OCCUPIED') badgeColor = 'text-[var(--foreground)]';
+                  if (st === 'CLEANING') badgeColor = 'text-[var(--muted-foreground)]';
+                  if (st === 'MAINTENANCE') badgeColor = 'text-[var(--destructive)]';
 
                   return (
-                    <div
-                      key={cb.building.id}
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setQuickStatusFilter(st)}
                       className={cn(
-                        "rounded-3xl bg-[var(--card)] border border-[var(--border)] shadow-md transition-all",
-                        isCollapsed ? "p-4 space-y-2.5" : "p-5 space-y-4"
+                        'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer',
+                        isSelected
+                          ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-2xs'
+                          : 'bg-[var(--muted)]/50 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]'
                       )}
                     >
-                      {/* Building Header (Clickable to Collapse / Expand) */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--border)]">
-                        <div
-                          onClick={() => toggleBuildingCollapse(cb.building.id)}
-                          className="flex items-center gap-2.5 cursor-pointer group select-none flex-1"
-                          title={isCollapsed ? 'Click to expand building floors & facilities' : 'Click to collapse building'}
-                        >
-                          {/* Collapse / Expand Chevron Icon Button */}
-                          <div className="w-7 h-7 rounded-xl bg-[var(--primary)]/10 text-[var(--primary)] group-hover:bg-[var(--primary)]/20 group-hover:scale-105 flex items-center justify-center transition-all shrink-0">
-                            {isCollapsed ? (
-                              <ChevronRight className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
+                      <span>{st === 'ALL' ? 'All' : st.charAt(0) + st.slice(1).toLowerCase()}</span>
+                      <span className={cn(
+                        'px-1 py-0.2 rounded text-[10px] font-mono',
+                        isSelected ? 'bg-white/20 text-white' : badgeColor
+                      )}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-                          <div className="w-9 h-9 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center font-bold shrink-0">
-                            <Building2 className="w-5 h-5" />
-                          </div>
-
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-base font-extrabold text-[var(--foreground)] tracking-tight group-hover:text-[var(--primary)] transition-colors">
-                                {cb.building.name}
-                              </h3>
-                              {cb.building.code && (
-                                <span className="px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-foreground)] font-mono text-[10px] font-bold">
-                                  {cb.building.code}
-                                </span>
-                              )}
-                              <span className="px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-foreground)] text-[10px] font-bold">
-                                {cb.building.buildingType}
-                              </span>
-                              {isCollapsed && (
-                                <span className="px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-bold">
-                                  Collapsed
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-[var(--muted-foreground)] flex items-center gap-2 mt-0.5 flex-wrap">
-                              <span>{cb.totalFloors} Floor Levels</span>
-                              <span>•</span>
-                              <span>{cb.totalRooms} Rooms ({bAvailable} ready, {bOccupied} in-house)</span>
-                              <span>•</span>
-                              <span>{cb.utilities.length} Amenities</span>
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowAddFloorInput(true);
-                              setActiveBuildingId(cb.building.id);
-                            }}
-                            className="h-8 text-xs font-bold rounded-xl border-[var(--border)] gap-1"
-                          >
-                            <Plus className="w-3.5 h-3.5" /> Add Floor Level
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingBuilding(cb.building);
-                            }}
-                            className="h-8 text-xs font-bold rounded-xl border-[var(--border)] gap-1"
-                          >
-                            <Pencil className="w-3.5 h-3.5" /> Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleBuildingCollapse(cb.building.id);
-                            }}
-                            className="h-8 text-xs font-bold rounded-xl px-2.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] gap-1"
-                          >
-                            {isCollapsed ? (
-                              <>
-                                <ChevronRight className="w-3.5 h-3.5" /> Expand
-                              </>
-                            ) : (
-                              <>
-                                <ChevronDown className="w-3.5 h-3.5" /> Collapse
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* When Collapsed: Quick Summary Strip */}
-                      {isCollapsed ? (
-                        <div
-                          onClick={() => toggleBuildingCollapse(cb.building.id)}
-                          className="p-3 bg-[var(--muted)]/30 hover:bg-[var(--muted)]/50 rounded-2xl border border-dashed border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs cursor-pointer transition-all"
-                        >
-                          <div className="flex items-center gap-2 text-[11px] text-[var(--muted-foreground)] flex-wrap">
-                            <span className="font-bold text-[var(--foreground)]">Quick Breakdown:</span>
-                            <span className="px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] font-bold border border-[var(--primary)]/20">
-                              {bAvailable} Available
-                            </span>
-                            <span className="px-2 py-0.5 rounded-md bg-[var(--secondary)] text-[var(--secondary-foreground)] font-bold border border-[var(--border)]">
-                              {bOccupied} Occupied
-                            </span>
-                            {bCleaning > 0 && (
-                              <span className="px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-foreground)] font-bold border border-[var(--border)]">
-                                {bCleaning} Cleaning
-                              </span>
-                            )}
-                            {bMaintenance > 0 && (
-                              <span className="px-2 py-0.5 rounded-md bg-[var(--destructive)]/10 text-[var(--destructive)] font-bold border border-[var(--destructive)]/20">
-                                {bMaintenance} Maintenance
-                              </span>
-                            )}
-                            <span className="px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] font-bold border border-[var(--primary)]/20">
-                              {cb.utilities.length} Facilities
-                            </span>
-                          </div>
-                          <span className="text-[11px] font-bold text-[var(--primary)] flex items-center gap-1 shrink-0">
-                            Click to Expand Elevation View <ChevronDown className="w-3.5 h-3.5" />
-                          </span>
-                        </div>
-                      ) : (
-                        <>
-                          {/* PHYSICAL VERTICAL ELEVATION STACK */}
-                      <div className="space-y-3">
-                        {buildingFloorsElevation.length === 0 ? (
-                          <div className="p-8 text-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--muted)]/20">
-                            <Layers className="w-8 h-8 text-[var(--muted-foreground)] mx-auto mb-2 opacity-50" />
-                            <p className="text-xs font-bold text-[var(--foreground)]">No floors added to {cb.building.name} yet</p>
-                            <p className="text-[11px] text-[var(--muted-foreground)] mt-0.5">Click "Add Floor Level" above to create Floor 1.</p>
-                          </div>
-                        ) : (
-                          buildingFloorsElevation.map((floor) => {
-                            const isFloorDragTarget = dragOverFloorDropTarget === floor.id;
-                            const isRoomDropTarget = dragOverFloorId === floor.id;
-                            const isBeingDragged = draggingFloorId === floor.id;
-
-                            return (
-                              <div
-                                key={floor.id}
-                                onDragOver={e => {
-                                  e.preventDefault();
-                                  if (draggingFloorId && draggingFloorId !== floor.id) {
-                                    setDragOverFloorDropTarget(floor.id);
-                                  } else if (draggingRoomId) {
-                                    setDragOverFloorId(floor.id);
-                                  }
-                                }}
-                                onDragLeave={() => {
-                                  if (dragOverFloorDropTarget === floor.id) setDragOverFloorDropTarget(null);
-                                  if (dragOverFloorId === floor.id) setDragOverFloorId(null);
-                                }}
-                                onDrop={e => {
-                                  e.preventDefault();
-                                  if (draggingFloorId) {
-                                    handleFloorDrop(floor, cb.floors || []);
-                                  } else if (draggingRoomId) {
-                                    handleRoomDropOnFloor(floor.id);
-                                  }
-                                }}
-                                className={cn(
-                                  'p-4 rounded-2xl border-2 transition-all relative',
-                                  isFloorDragTarget
-                                    ? 'border-[var(--primary)] bg-[var(--primary)]/10 shadow-lg scale-[1.01]'
-                                    : isRoomDropTarget
-                                    ? 'border-[var(--primary)] bg-[var(--primary)]/15 shadow-lg'
-                                    : 'border-[var(--border)] bg-[var(--card)]/80 hover:border-[var(--border)] shadow-xs',
-                                  isBeingDragged && 'opacity-40 border-dashed'
-                                )}
-                              >
-                                {/* Floor Header Bar */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-[var(--border)]">
-                                  <div className="flex items-center gap-2.5">
-                                    {/* Vertical Drag Grip Handle for Floor Level */}
-                                    <div
-                                      draggable
-                                      onDragStart={e => {
-                                        setDraggingFloorId(floor.id);
-                                        e.dataTransfer.setData('text/plain', `floor:${floor.id}`);
-                                      }}
-                                      onDragEnd={() => {
-                                        setDraggingFloorId(null);
-                                        setDragOverFloorDropTarget(null);
-                                      }}
-                                      className="p-1 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 cursor-grab active:cursor-grabbing transition-colors"
-                                      title="Drag floor up/down to re-order elevation levels"
-                                    >
-                                      <GripVertical className="w-4 h-4" />
-                                    </div>
-
-                                    {/* Level Badge */}
-                                    <span className="px-2.5 py-1 rounded-xl bg-[var(--primary)]/10 text-[var(--primary)] font-mono text-xs font-black tracking-tight border border-[var(--primary)]/20">
-                                      Level {floor.floorNumber}
-                                    </span>
-
-                                    <div>
-                                      <span className="font-extrabold text-xs text-[var(--foreground)]">
-                                        {floor.name}
-                                      </span>
-                                      <span className="ml-2 text-[10px] text-[var(--muted-foreground)]">
-                                        ({floor.rooms?.length || 0} rooms)
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => {
-                                        setTargetCreateRoomFloorId(floor.id);
-                                        setShowCreateRoomModal(true);
-                                      }}
-                                      className="h-7 text-[11px] font-bold rounded-lg px-2 gap-1 text-[var(--primary)] hover:bg-[var(--primary)]/10"
-                                    >
-                                      <Plus className="w-3 h-3" /> Add Room Here
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => setEditingFloor(floor)}
-                                      className="h-7 text-[11px] font-bold rounded-lg px-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                                      title="Edit Floor"
-                                    >
-                                      <Pencil className="w-3 h-3" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleDeleteFloor(floor.id, floor.name)}
-                                      className="h-7 text-[11px] font-bold rounded-lg px-2 text-[var(--muted-foreground)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-                                      title="Delete Floor"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-
-                                {/* Rooms Container on this Floor (Minimalist Draggable Cards) */}
-                                {(() => {
-                                  const floorRoomsFiltered = (floor.rooms || []).filter(room => {
-                                    if (quickStatusFilter === 'ALL') return true;
-                                    return room.status === quickStatusFilter;
-                                  });
-
-                                  if (floorRoomsFiltered.length === 0) {
-                                    return (
-                                      <div className="py-4 text-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--muted)]/10">
-                                        <p className="text-[11px] text-[var(--muted-foreground)] italic">
-                                          {floor.rooms && floor.rooms.length > 0
-                                            ? `No rooms on Level ${floor.floorNumber} with status "${quickStatusFilter}"`
-                                            : 'Empty level — Drag a room here or click "Add Room Here".'}
-                                        </p>
-                                      </div>
-                                    );
-                                  }
-
-                                  return (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
-                                      {floorRoomsFiltered.map(room => {
-                                        let statusBg = 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
-                                        let statusDot = 'bg-[var(--primary)]';
-                                        if (room.status === 'OCCUPIED') {
-                                          statusBg = 'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)]';
-                                          statusDot = 'bg-[var(--foreground)]';
-                                        } else if (room.status === 'CLEANING') {
-                                          statusBg = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
-                                          statusDot = 'bg-[var(--muted-foreground)]';
-                                        } else if (room.status === 'MAINTENANCE') {
-                                          statusBg = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20';
-                                          statusDot = 'bg-[var(--destructive)]';
-                                        }
-
-                                        const isBeingDragged = draggingRoomId === room.id;
-
-                                        return (
-                                          <div
-                                            key={room.id}
-                                            draggable
-                                            onDragStart={e => {
-                                              setDraggingRoomId(room.id);
-                                              e.dataTransfer.setData('text/plain', `room:${room.id}`);
-                                            }}
-                                            onDragEnd={() => {
-                                              setDraggingRoomId(null);
-                                              setDragOverFloorId(null);
-                                            }}
-                                            onClick={() => setSelectedDrawerRoom(room)}
-                                            className={cn(
-                                              'group p-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)] hover:shadow-md transition-all cursor-pointer select-none flex flex-col justify-between min-h-[96px] relative',
-                                              isBeingDragged && 'opacity-40 scale-95 border-dashed border-[var(--primary)]'
-                                            )}
-                                          >
-                                            {/* Top: Room # & Nightly Rate */}
-                                            <div className="flex items-center justify-between gap-1">
-                                              <span className="font-mono text-xs font-black text-[var(--foreground)] tracking-tight">
-                                                #{room.roomNumber}
-                                              </span>
-                                              <span className="font-mono text-xs font-bold text-[var(--primary)]">
-                                                {formatCurrency(room.basePrice).replace('.00', '')}
-                                              </span>
-                                            </div>
-
-                                            {/* Category / Name */}
-                                            <div className="my-1.5">
-                                              {room.customName ? (
-                                                <div className="text-[11px] font-bold text-[var(--primary)] truncate flex items-center gap-1" title={room.customName}>
-                                                  <Sparkles className="w-3 h-3 shrink-0" />
-                                                  <span className="truncate">{room.customName}</span>
-                                                </div>
-                                              ) : (
-                                                <div className="text-[11px] font-medium text-[var(--muted-foreground)] truncate" title={room.categoryName || 'Standard Room'}>
-                                                  {room.categoryName || 'Standard Room'}
-                                                </div>
-                                              )}
-                                            </div>
-
-                                            {/* 1-Click Status Pill */}
-                                            <button
-                                              type="button"
-                                              onClick={e => {
-                                                e.stopPropagation();
-                                                const statusOrder: LiveRoomStatus[] = ['AVAILABLE', 'OCCUPIED', 'CLEANING', 'MAINTENANCE'];
-                                                const currentIdx = statusOrder.indexOf(room.status);
-                                                const nextStatus = statusOrder[(currentIdx + 1) % statusOrder.length];
-                                                handleUpdateStatus(room.id, nextStatus);
-                                              }}
-                                              className={cn(
-                                                'w-full py-1 px-2 rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 border transition-all hover:opacity-90 active:scale-95 cursor-pointer shadow-2xs',
-                                                statusBg
-                                              )}
-                                              title="Click to cycle status"
-                                            >
-                                              <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', statusDot)} />
-                                              <span>{room.status}</span>
-                                            </button>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </>
-                  )}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Elevation vs 2D Canvas Toggle */}
+                <div className="flex items-center rounded-xl bg-[var(--muted)]/50 p-0.5 border border-[var(--border)]">
+                  <button
+                    type="button"
+                    onClick={() => setActiveFloorId('ALL')}
+                    className={cn(
+                      'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
+                      activeFloorId === 'ALL'
+                        ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-extrabold'
+                        : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
+                    )}
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-[var(--primary)]" />
+                    <span>Elevation</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activeFloorId === 'ALL' && displayedFloors.length > 0) {
+                        setActiveFloorId(String(displayedFloors[0].id));
+                      }
+                    }}
+                    className={cn(
+                      'px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer',
+                      activeFloorId !== 'ALL'
+                        ? 'bg-[var(--card)] text-[var(--foreground)] shadow-xs font-extrabold'
+                        : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
+                    )}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5 text-[var(--primary)]" />
+                    <span>2D Canvas</span>
+                  </button>
                 </div>
-              );
-            })}
-            </div>
-          ) : (
-            /* ═════════════════════════════════════════════════════════════════ */
-            /* VIEW B: 2D FLOOR PLAN CANVAS (FOR SINGLE FLOOR SELECTION)          */
-            /* ═════════════════════════════════════════════════════════════════ */
-            <div
-              className="w-full h-[640px] min-h-[640px] bg-[var(--card)] border border-[var(--border)] rounded-3xl relative overflow-hidden shadow-inner flex flex-col"
-            >
-              {/* Top Architectural Toolbar overlay */}
-              <div className="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-                {/* Left: Active Floor Level Switcher & Live Stats */}
-                <div className="flex items-center gap-2 bg-[var(--card)]/95 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-[var(--border)] shadow-md text-xs pointer-events-auto">
-                  <Layers className="w-4 h-4 text-[var(--primary)] shrink-0" />
-                  <Select value={activeFloorId} onValueChange={setActiveFloorId}>
-                    <SelectTrigger className="h-7 border-none bg-transparent shadow-none px-1 text-xs font-extrabold text-[var(--foreground)] w-auto min-w-[150px]">
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {displayedFloors.map(f => (
-                        <SelectItem key={f.id} value={String(f.id)}>
-                          Level {f.floorNumber}: {f.name} ({f.rooms?.length || 0} rooms)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
 
-                  <div className="h-4 w-px bg-[var(--border)]" />
+                {activeFloorId !== 'ALL' && displayedFloors.length > 0 && (
+                  <div className="flex items-center gap-1.5 bg-[var(--muted)]/50 px-2 py-0.5 rounded-xl border border-[var(--border)]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Level:</span>
+                    <Select value={activeFloorId} onValueChange={setActiveFloorId}>
+                      <SelectTrigger className="h-7 text-xs font-bold rounded-lg bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] px-2 shadow-2xs w-auto min-w-[140px]">
+                        <SelectValue placeholder="Select Floor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {displayedFloors.map(f => (
+                          <SelectItem key={f.id} value={String(f.id)}>
+                            L{f.floorNumber} — {f.name} ({f.rooms?.length || 0} rms)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-                  <div className="flex items-center gap-2 text-[10px] font-bold">
-                    <span className="text-[var(--primary)]">
-                      {activeFloorRooms.filter(r => r.status === 'AVAILABLE').length} Vacant
-                    </span>
-                    <span>•</span>
-                    <span className="text-[var(--foreground)]">
-                      {activeFloorRooms.filter(r => r.status === 'OCCUPIED').length} Occupied
-                    </span>
-                    {activeFloorRooms.some(r => r.status === 'CLEANING' || r.status === 'MAINTENANCE') && (
+                {activeFloorId === 'ALL' && (
+                  <button
+                    type="button"
+                    onClick={handleToggleAllBuildings}
+                    className="h-8 px-2.5 rounded-xl bg-[var(--background)] hover:bg-[var(--muted)] border border-[var(--border)] text-xs font-bold text-[var(--foreground)] transition-all flex items-center gap-1 cursor-pointer"
+                    title={areAllBuildingsCollapsed ? 'Expand all buildings' : 'Collapse all buildings'}
+                  >
+                    {areAllBuildingsCollapsed ? (
                       <>
-                        <span>•</span>
-                        <span className="text-[var(--muted-foreground)]">
-                          {activeFloorRooms.filter(r => r.status === 'CLEANING' || r.status === 'MAINTENANCE').length} Attention
-                        </span>
+                        <ChevronDown className="w-3.5 h-3.5 text-[var(--primary)]" /> Expand
+                      </>
+                    ) : (
+                      <>
+                        <ChevronRight className="w-3.5 h-3.5 text-[var(--primary)]" /> Collapse
                       </>
                     )}
-                  </div>
-                </div>
-
-                {/* Right: Actions (Auto-Arrange, Snap, Add Room) */}
-                <div className="flex items-center gap-1.5 bg-[var(--card)]/95 backdrop-blur-md p-1.5 rounded-2xl border border-[var(--border)] shadow-md text-xs pointer-events-auto">
-                  <button
-                    type="button"
-                    onClick={handleResetCanvasLayout}
-                    className="h-8 px-2.5 rounded-xl font-bold text-[10px] bg-[var(--muted)]/50 hover:bg-[var(--muted)] text-[var(--foreground)] transition-all cursor-pointer flex items-center gap-1 border border-[var(--border)]"
-                    title="Auto-arrange rooms into a clean blueprint grid"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 text-[var(--primary)]" />
-                    <span>Auto-Arrange</span>
                   </button>
+                )}
 
-                  <button
-                    type="button"
-                    onClick={() => setSnapToGrid(!snapToGrid)}
-                    className={cn(
-                      'h-8 px-2.5 rounded-xl font-bold text-[10px] transition-all cursor-pointer border flex items-center gap-1',
-                      snapToGrid
-                        ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)] shadow-2xs'
-                        : 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]'
-                    )}
-                    title="Toggle magnetic grid alignment"
-                  >
-                    <span>Snap: {snapToGrid ? 'ON' : 'OFF'}</span>
-                  </button>
-
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setTargetCreateRoomFloorId(activeFloor ? activeFloor.id : undefined);
-                      setShowCreateRoomModal(true);
-                    }}
-                    className="h-8 px-3 text-[11px] font-bold rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 gap-1.5 shadow-xs"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Room Here
-                  </Button>
-                </div>
-              </div>
-
-              {/* Bottom Left: Blueprint Status Legend & Tip */}
-              <div className="absolute bottom-3 left-3 z-20 hidden sm:flex items-center gap-3 bg-[var(--card)]/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-[var(--border)] shadow-xs text-[10px] text-[var(--muted-foreground)] font-bold pointer-events-none">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[var(--primary)]" /> Available
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[var(--foreground)]" /> Occupied
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[var(--muted-foreground)]" /> Cleaning
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[var(--destructive)]" /> Maintenance
-                </span>
-                <span className="text-[var(--border)]">|</span>
-                <span className="text-[var(--foreground)]/70">Drag to layout • Click for details</span>
-              </div>
-
-              {/* Canvas Empty State or Interactive Blueprint Items */}
-              {backendFloors.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center mb-3">
-                    <Layers className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-base font-bold text-[var(--foreground)]">No Floors Defined Yet</h3>
-                  <p className="text-xs text-[var(--muted-foreground)] max-w-sm mt-1 mb-4">
-                    Start by adding your first building floor (e.g. "Ground Floor" or "First Floor").
-                  </p>
-                  <Button
-                    onClick={() => setShowAddFloorInput(true)}
-                    className="bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 font-bold rounded-xl text-xs px-4 h-9 shadow-md"
-                  >
-                    <Plus className="w-4 h-4 mr-1.5" /> Add First Floor
-                  </Button>
-                </div>
-              ) : activeFloorRooms.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center mb-3">
-                    <BedDouble className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-base font-bold text-[var(--foreground)]">No Rooms on {activeFloor?.name}</h3>
-                  <p className="text-xs text-[var(--muted-foreground)] max-w-sm mt-1 mb-4">
-                    Add rooms individually to this level or use the Bulk Generator to quickly place multiple rooms.
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setTargetCreateRoomFloorId(activeFloor ? activeFloor.id : undefined);
-                        setShowCreateRoomModal(true);
-                      }}
-                      className="bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 font-bold rounded-xl text-xs px-4 h-9"
-                    >
-                      <Plus className="w-4 h-4 mr-1.5" /> Add Room Here
+                {showAddFloorInput ? (
+                  <form onSubmit={handleCreateFloor} className="flex items-center gap-1">
+                    <Input
+                      placeholder="Floor Name (e.g. Ground Floor)"
+                      value={newFloorName}
+                      onChange={e => setNewFloorName(e.target.value)}
+                      className="h-8 text-xs rounded-xl w-36"
+                      autoFocus
+                    />
+                    <Button type="submit" size="sm" className="h-8 text-xs font-bold rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 px-2.5">
+                      Save
                     </Button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  ref={canvasRef}
-                  className="w-full h-full relative overflow-auto cursor-default"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle, color-mix(in oklch, var(--foreground) 10%, transparent) 1.5px, transparent 1.5px)',
-                    backgroundSize: '24px 24px'
-                  }}
-                >
-                  <div className="min-w-[1400px] min-h-[750px] relative pt-16 pb-12">
-                    {canvasItems.map(item => {
-                    const isSelected = selectedItemId === item.id;
-                    const isDragging = draggingItemId === item.id;
-
-                    let statusBg = 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20 hover:bg-[var(--primary)]/15';
-                    let statusDot = 'bg-[var(--primary)]';
-                    if (item.status === 'OCCUPIED') {
-                      statusBg = 'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)] hover:bg-[var(--muted)]';
-                      statusDot = 'bg-[var(--foreground)]';
-                    } else if (item.status === 'CLEANING') {
-                      statusBg = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)]/80';
-                      statusDot = 'bg-[var(--muted-foreground)]';
-                    } else if (item.status === 'MAINTENANCE') {
-                      statusBg = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20 hover:bg-[var(--destructive)]/15';
-                      statusDot = 'bg-[var(--destructive)]';
-                    }
-
-                    return (
-                      <div
-                        key={item.id}
-                        onMouseDown={e => handleNodeMouseDown(e, item)}
-                        onClick={() => {
-                          if (!hasMovedRef.current) {
-                            const rm = backendRooms.find(r => String(r.id) === String(item.roomId));
-                            if (rm) setSelectedDrawerRoom(rm);
-                          }
-                        }}
-                        style={{
-                          position: 'absolute',
-                          left: `${item.x}px`,
-                          top: `${item.y}px`,
-                          width: '152px',
-                          height: '106px'
-                        }}
-                        className={cn(
-                          'group rounded-2xl border-2 p-3 flex flex-col justify-between transition-all cursor-grab active:cursor-grabbing select-none',
-                          isSelected
-                            ? 'border-[var(--primary)] shadow-xl ring-2 ring-[var(--primary)]/25 z-30 bg-[var(--card)]'
-                            : 'border-[var(--border)] shadow-xs hover:border-[var(--primary)]/70 hover:shadow-md bg-[var(--card)]',
-                          isDragging && 'opacity-90 shadow-2xl scale-105 z-40'
-                        )}
-                      >
-                        {/* Card Top: Room # & Nightly Rate */}
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-sm font-black text-[var(--foreground)] tracking-tight">
-                            #{item.label.replace('Room ', '')}
-                          </span>
-
-                          <div className="flex items-center">
-                            <span className="font-mono font-bold text-[11px] text-[var(--primary)] group-hover:hidden transition-all">
-                              {formatCurrency(item.basePrice || 0).replace('.00', '')}
-                            </span>
-                            <div className="hidden group-hover:flex items-center gap-1 transition-all">
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  const rm = backendRooms.find(r => String(r.id) === String(item.roomId));
-                                  if (rm) setEditingRoom(rm);
-                                }}
-                                className="p-1 rounded-md text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors"
-                                title="Edit Room Details"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  if (item.roomId) handleDeleteRoom(Number(item.roomId), item.label);
-                                }}
-                                className="p-1 rounded-md text-[var(--muted-foreground)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10 transition-colors"
-                                title="Delete Room"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Card Middle: Category Name */}
-                        <div className="my-1">
-                          <div className="text-[11px] font-medium text-[var(--muted-foreground)] truncate" title={item.categoryName || 'Standard Room'}>
-                            {item.categoryName || 'Standard Room'}
-                          </div>
-                        </div>
-
-                        {/* Card Bottom: 1-Click Status Pill */}
-                        <button
-                          type="button"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleCycleStatus(item);
-                          }}
-                          className={cn(
-                            'w-full py-1 px-2 rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 border transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-2xs',
-                            statusBg
-                          )}
-                          title="Click to cycle status"
-                        >
-                          <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', statusDot)} />
-                          <span>{item.status}</span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        {/* TAB 2: ROOM DIRECTORY TABLE                                          */}
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="list" className="pt-3 space-y-4">
-          {/* SEARCH & FILTERS BAR */}
-          <div className="p-3 bg-[var(--card)] border border-[var(--border)] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-            <div className="flex items-center gap-2 flex-1 flex-wrap">
-              <div className="relative flex-1 min-w-[200px] max-w-sm">
-                <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute left-3 top-1/2 -translate-y-1/2" />
-                <Input
-                  value={directorySearch}
-                  onChange={e => setDirectorySearch(e.target.value)}
-                  placeholder="Search room #, category, building, amenities..."
-                  className="pl-9 h-9 text-xs rounded-xl"
-                />
-              </div>
-
-              {/* Building Filter */}
-              <Select
-                value={String(directoryBuildingFilter)}
-                onValueChange={val => setDirectoryBuildingFilter(val === 'ALL' ? 'ALL' : Number(val))}
-              >
-                <SelectTrigger className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] w-auto min-w-[150px]">
-                  <SelectValue placeholder="All Buildings" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Buildings ({buildings.length})</SelectItem>
-                  {buildings.map(b => (
-                    <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Floor Filter */}
-              <Select
-                value={directoryFloorFilter}
-                onValueChange={val => setDirectoryFloorFilter(val)}
-              >
-                <SelectTrigger className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] w-auto min-w-[140px]">
-                  <SelectValue placeholder="All Floors" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Floors ({backendFloors.length})</SelectItem>
-                  {backendFloors.map(f => (
-                    <SelectItem key={f.id} value={String(f.id)}>Floor {f.floorNumber} — {f.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Status Filter */}
-              <Select
-                value={directoryStatusFilter}
-                onValueChange={val => setDirectoryStatusFilter(val)}
-              >
-                <SelectTrigger className="h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)] w-auto min-w-[130px]">
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Statuses</SelectItem>
-                  <SelectItem value="AVAILABLE">🟢 Available</SelectItem>
-                  <SelectItem value="OCCUPIED">🔵 Occupied</SelectItem>
-                  <SelectItem value="CLEANING">🟡 Cleaning</SelectItem>
-                  <SelectItem value="MAINTENANCE">🔴 Maintenance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <span className="text-xs font-bold text-[var(--muted-foreground)] whitespace-nowrap">
-              Showing <span className="text-[var(--foreground)]">{filteredDirectoryRooms.length}</span> of {backendRooms.length} rooms
-            </span>
-          </div>
-
-          {/* TABLE CONTAINER */}
-          <Card className="rounded-2xl border-[var(--border)] overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-[var(--muted)]/50 text-[10px] font-bold text-[var(--muted-foreground)] uppercase tracking-wider border-b border-[var(--border)]">
-                  <tr>
-                    <th className="py-3 px-4">Room #</th>
-                    <th className="py-3 px-4">Building &amp; Floor</th>
-                    <th className="py-3 px-4">Category / Custom Title</th>
-                    <th className="py-3 px-4">Nightly Rate</th>
-                    <th className="py-3 px-4">Amenities</th>
-                    <th className="py-3 px-4">Live Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]">
-                  {filteredDirectoryRooms.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-xs text-[var(--muted-foreground)]">
-                        No rooms match the selected filters.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredDirectoryRooms.map(rm => {
-                      let statusBadge = 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
-                      if (rm.status === 'OCCUPIED') statusBadge = 'bg-[var(--secondary)] text-[var(--secondary-foreground)] border-[var(--border)]';
-                      else if (rm.status === 'CLEANING') statusBadge = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
-                      else if (rm.status === 'MAINTENANCE') statusBadge = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20';
-
-                      return (
-                        <tr key={rm.id} className="hover:bg-[var(--muted)]/30 transition-colors">
-                          <td className="py-3 px-4 font-mono font-bold text-xs text-[var(--foreground)]">
-                            #{rm.roomNumber}
-                          </td>
-                          <td className="py-3 px-4 text-xs">
-                            <span className="font-semibold text-[var(--foreground)]">{rm.buildingName || 'Main Tower'}</span>
-                            <span className="text-[11px] text-[var(--muted-foreground)] block">
-                              Floor {rm.floorNumber ?? '—'} ({rm.floorName})
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-xs">
-                            {rm.customName ? (
-                              <div>
-                                <span className="font-bold text-[var(--primary)] flex items-center gap-1">
-                                  <Sparkles className="w-3 h-3 text-[var(--primary)]" /> {rm.customName}
-                                </span>
-                                <span className="text-[10px] text-[var(--muted-foreground)]">Free-Hand Custom</span>
-                              </div>
-                            ) : (
-                              <div>
-                                <span className="font-bold text-[var(--foreground)]">{rm.categoryName}</span>
-                                <span className="text-[10px] text-[var(--muted-foreground)] block">Preset Tier</span>
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-3 px-4 text-xs font-mono font-bold text-[var(--primary)]">
-                            {formatCurrency(rm.basePrice)}
-                          </td>
-                          <td className="py-3 px-4 text-xs">
-                            <div className="flex flex-wrap gap-1 max-w-xs">
-                              {rm.amenities && rm.amenities.length > 0 ? (
-                                rm.amenities.slice(0, 3).map(a => (
-                                  <span key={a} className="px-1.5 py-0.5 rounded bg-[var(--muted)] text-[9px] text-[var(--muted-foreground)]">
-                                    {a}
-                                  </span>
-                                ))
-                              ) : (
-                                <span className="text-[10px] text-[var(--muted-foreground)] italic">—</span>
-                              )}
-                              {rm.amenities && rm.amenities.length > 3 && (
-                                <span className="text-[9px] text-[var(--muted-foreground)]">+{rm.amenities.length - 3}</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-xs">
-                            <Select
-                              value={rm.status}
-                              onValueChange={val => handleUpdateStatus(rm.id, val as LiveRoomStatus)}
-                            >
-                              <SelectTrigger
-                                className={cn(
-                                  'h-7 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border cursor-pointer w-auto min-w-[110px]',
-                                  statusBadge
-                                )}
-                              >
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="AVAILABLE">AVAILABLE</SelectItem>
-                                <SelectItem value="OCCUPIED">OCCUPIED</SelectItem>
-                                <SelectItem value="CLEANING">CLEANING</SelectItem>
-                                <SelectItem value="MAINTENANCE">MAINTENANCE</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="py-3 px-4 text-xs text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setEditingRoom(rm)}
-                                className="h-7 text-xs font-bold rounded-lg px-2 text-[var(--muted-foreground)] hover:text-[var(--primary)]"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteRoom(rm.id, rm.roomNumber)}
-                                className="h-7 text-xs font-bold rounded-lg px-2 text-[var(--destructive)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        {/* TAB 3: CATEGORIES & PRICING                                          */}
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="categories" className="pt-3 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-extrabold text-[var(--foreground)]">Room Categories &amp; Pricing Tiers</h3>
-              <p className="text-xs text-[var(--muted-foreground)]">
-                Categories define standard baseline nightly rates, guest capacities, and included amenities.
-              </p>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setShowCreateCategoryModal(true)}
-              className="h-8 text-xs font-bold rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 gap-1.5 shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Category
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {backendCategories.map(cat => (
-              <Card key={cat.id} className="rounded-2xl border-[var(--border)] overflow-hidden shadow-xs flex flex-col justify-between">
-                <div>
-                  <CardHeader className="p-4 border-b border-[var(--border)] flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
-                        {cat.name}
-                        {cat.code && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] font-mono text-[10px] font-bold">
-                            {cat.code}
-                          </span>
-                        )}
-                      </CardTitle>
-                      <span className="text-[11px] text-[var(--muted-foreground)]">
-                        {cat.roomCount} room{cat.roomCount !== 1 ? 's' : ''} assigned
-                      </span>
-                    </div>
-                    <span className="text-sm font-black font-mono text-[var(--primary)]">
-                      {formatCurrency(cat.basePrice)}<span className="text-[10px] text-[var(--muted-foreground)] font-normal">/night</span>
-                    </span>
-                  </CardHeader>
-
-                  <CardContent className="p-4 space-y-3 text-xs">
-                    <div className="flex items-center justify-between text-[11px] text-[var(--muted-foreground)]">
-                      <span>Max Occupancy:</span>
-                      <span className="font-bold text-[var(--foreground)]">
-                        {cat.maxAdults} Adults, {cat.maxChildren} Children
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-bold text-[var(--muted-foreground)] uppercase block mb-1.5">
-                        Amenities ({cat.amenities?.length || 0}):
-                      </span>
-                      <div className="flex flex-wrap gap-1">
-                        {cat.amenities && cat.amenities.length > 0 ? (
-                          cat.amenities.map(a => (
-                            <span
-                              key={a}
-                              className="px-2 py-0.5 rounded-md bg-[var(--muted)]/50 border border-[var(--border)] text-[10px] font-semibold text-[var(--muted-foreground)]"
-                            >
-                              {a}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-[10px] text-[var(--muted-foreground)] italic">Standard amenities</span>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </div>
-
-                <div className="p-3 border-t border-[var(--border)] flex items-center justify-end gap-2 bg-[var(--card)]/50">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs rounded-xl px-2 cursor-pointer"
+                      onClick={() => setShowAddFloorInput(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </form>
+                ) : (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setEditingCategory(cat)}
-                    className="h-8 text-[11px] font-bold rounded-xl px-2.5 gap-1 border-[var(--border)]"
+                    onClick={() => setShowAddFloorInput(true)}
+                    className="h-8 text-xs font-bold rounded-xl border-[var(--border)] gap-1 text-[var(--foreground)] cursor-pointer"
+                    title="Add Floor Level"
                   >
-                    <Pencil className="w-3 h-3 text-[var(--primary)]" /> Edit
+                    <Plus className="w-3.5 h-3.5 text-[var(--primary)]" /> Add Floor
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                    className="h-8 text-[11px] text-[var(--destructive)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10 font-bold rounded-xl px-2.5 gap-1"
-                  >
-                    <Trash2 className="w-3 h-3" /> Delete
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        {/* TAB 4: BULK ROOM GENERATOR                                           */}
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        {/* TAB 4: CAMPUS FACILITIES & OUTDOOR GROUNDS                            */}
-        {/* ═════════════════════════════════════════════════════════════════════ */}
-        <TabsContent value="facilities" className="pt-3 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-extrabold text-[var(--foreground)] flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[var(--primary)]" />
-                Campus Facilities &amp; Outdoor Grounds ({backendUtilities.length})
-              </h3>
-              <p className="text-xs text-[var(--muted-foreground)]">
-                Manage shared guest facilities, swimming pools, fitness clubs, conference halls, and recreational grounds.
-              </p>
+                )}
+              </div>
             </div>
-            <Button
-              size="sm"
-              onClick={() => setShowCreateUtilityModal(true)}
-              className="h-8 text-xs font-bold rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 gap-1.5 shadow-sm"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Facility
-            </Button>
-          </div>
 
-          {backendUtilities.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl bg-[var(--card)] border border-dashed border-[var(--border)]">
-              <Sparkles className="w-8 h-8 text-[var(--muted-foreground)] mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-bold text-[var(--foreground)]">No Campus Facilities Registered</p>
-              <p className="text-xs text-[var(--muted-foreground)] mt-1 mb-4">
-                Add pools, fitness clubs, spas, banquet halls, or sports courts to your campus layout.
-              </p>
-              <Button
-                size="sm"
-                onClick={() => setShowCreateUtilityModal(true)}
-                className="h-8 text-xs font-bold rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add First Facility
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {backendUtilities.map(u => {
-                let statusBadge = 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
-                if (u.status === 'CLEANING') statusBadge = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
-                else if (u.status === 'MAINTENANCE') statusBadge = 'bg-[var(--destructive)]/10 text-[var(--destructive)] border-[var(--destructive)]/20';
-                else if (u.status === 'CLOSED') statusBadge = 'bg-[var(--muted)] text-[var(--muted-foreground)] border-[var(--border)]';
+            {/* View A: Elevation or View B: 2D Canvas */}
+            {activeFloorId === 'ALL' ? (
+              <CampusElevationView
+                campusBuildings={campusBuildings}
+                activeBuildingId={activeBuildingId}
+                collapsedBuildingIds={collapsedBuildingIds}
+                toggleBuildingCollapse={toggleBuildingCollapse}
+                quickStatusFilter={quickStatusFilter}
+                draggingFloorId={draggingFloorId}
+                setDraggingFloorId={setDraggingFloorId}
+                dragOverFloorDropTarget={dragOverFloorDropTarget}
+                setDragOverFloorDropTarget={setDragOverFloorDropTarget}
+                draggingRoomId={draggingRoomId}
+                setDraggingRoomId={setDraggingRoomId}
+                dragOverFloorId={dragOverFloorId}
+                setDragOverFloorId={setDragOverFloorId}
+                onFloorDrop={handleFloorDrop}
+                onRoomDropOnFloor={handleRoomDropOnFloor}
+                onAddFloorToBuilding={(bId) => {
+                  setShowAddFloorInput(true);
+                  setActiveBuildingId(bId);
+                }}
+                onEditBuilding={setEditingBuilding}
+                onAddRoomToFloor={(floorId) => {
+                  setTargetCreateRoomFloorId(floorId);
+                  setShowCreateRoomModal(true);
+                }}
+                onEditFloor={setEditingFloor}
+                onDeleteFloor={handleDeleteFloor}
+                onSelectDrawerRoom={setSelectedDrawerRoom}
+                onEditRoom={setEditingRoom}
+                onDeleteRoom={handleDeleteRoom}
+                onCycleRoomStatus={handleCycleRoomStatus}
+              />
+            ) : (
+              <RoomCanvasPlan
+                canvasItems={canvasItems}
+                activeFloor={activeFloor}
+                activeFloorRooms={activeFloorRooms}
+                backendRooms={backendRooms}
+                backendFloors={backendFloors}
+                selectedItemId={selectedItemId}
+                draggingItemId={draggingItemId}
+                canvasRef={canvasRef}
+                hasMovedRef={hasMovedRef}
+                onNodeMouseDown={handleNodeMouseDown}
+                onCycleStatus={handleCycleStatus}
+                onSelectDrawerRoom={setSelectedDrawerRoom}
+                onEditRoom={setEditingRoom}
+                onDeleteRoom={(roomId, label) => handleDeleteRoom(roomId, label)}
+                onAddRoomHere={() => {
+                  setTargetCreateRoomFloorId(activeFloor ? activeFloor.id : undefined);
+                  setShowCreateRoomModal(true);
+                }}
+                onAddFirstFloor={() => setShowAddFloorInput(true)}
+              />
+            )}
+          </TabsContent>
 
-                return (
-                  <div
-                    key={u.id}
-                    className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/50 shadow-xs flex flex-col justify-between transition-all"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <h5 className="font-bold text-sm text-[var(--foreground)] flex items-center gap-1.5">
-                            {u.name}
-                          </h5>
-                          <span className="text-[11px] text-[var(--muted-foreground)] font-semibold">
-                            {u.utilityType} {(() => {
-                              const bName = u.buildingName || buildings.find(b => b.id === u.buildingId)?.name;
-                              return bName ? `• ${bName}` : '';
-                            })()}
-                          </span>
-                        </div>
+          {/* TAB 2: ROOM DIRECTORY */}
+          <TabsContent value="list">
+            <RoomDirectoryTable
+              backendRooms={backendRooms}
+              buildings={buildings}
+              backendFloors={backendFloors}
+              onUpdateStatus={apiUpdateRoomStatus}
+              onEditRoom={setEditingRoom}
+              onDeleteRoom={handleDeleteRoom}
+            />
+          </TabsContent>
 
-                        {/* Quick Live Status Toggle */}
-                        <Select
-                          value={u.status}
-                          onValueChange={(val) => apiUpdateUtilityStatus(u.id, val as any)}
-                        >
-                          <SelectTrigger
-                            className={cn(
-                              'h-7 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border cursor-pointer w-auto shadow-none',
-                              statusBadge
-                            )}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="OPEN">🟢 OPEN</SelectItem>
-                            <SelectItem value="CLEANING">🟡 CLEANING</SelectItem>
-                            <SelectItem value="MAINTENANCE">🔴 MAINTENANCE</SelectItem>
-                            <SelectItem value="CLOSED">⚪ CLOSED</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+          {/* TAB 3: CATEGORIES */}
+          <TabsContent value="categories">
+            <RoomCategoriesTab
+              categories={backendCategories}
+              onAddCategory={() => setShowCreateCategoryModal(true)}
+              onEditCategory={setEditingCategory}
+              onDeleteCategory={handleDeleteCategory}
+            />
+          </TabsContent>
 
-                      {/* Info items */}
-                      <div className="mt-3 space-y-1.5 text-xs text-[var(--muted-foreground)]">
-                        {u.operatingHours && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-                            <span>{u.operatingHours}</span>
-                          </div>
-                        )}
-                        {u.capacity && (
-                          <div className="flex items-center gap-2">
-                            <Users className="w-3.5 h-3.5 text-[var(--muted-foreground)]" />
-                            <span>Capacity: {u.capacity} guests</span>
-                          </div>
-                        )}
-                        {u.rentalPrice && (
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-3.5 h-3.5 text-[var(--primary)]" />
-                            <span className="font-mono font-bold text-[var(--primary)]">
-                              {formatCurrency(u.rentalPrice)}/hr
-                            </span>
-                          </div>
-                        )}
-                      </div>
+          {/* TAB 4: FACILITIES */}
+          <TabsContent value="facilities">
+            <RoomFacilitiesTab
+              utilities={backendUtilities}
+              buildings={buildings}
+              onAddFacility={() => setShowCreateUtilityModal(true)}
+              onEditFacility={setEditingUtility}
+              onDeleteFacility={async (id, name) => {
+                if (confirm(`Delete facility "${name}"?`)) {
+                  await deleteUtility(id);
+                }
+              }}
+              onUpdateStatus={apiUpdateUtilityStatus}
+            />
+          </TabsContent>
 
-                      {u.amenities && u.amenities.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1">
-                          {u.amenities.map(a => (
-                            <span key={a} className="px-2 py-0.5 rounded-md bg-[var(--muted)] text-[10px] text-[var(--muted-foreground)] font-medium">
-                              {a}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center justify-end gap-1.5">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setEditingUtility(u)}
-                        className="h-8 text-xs font-bold rounded-xl px-2.5 text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 gap-1"
-                      >
-                        <Pencil className="w-3.5 h-3.5" /> Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={async () => {
-                          if (confirm(`Delete facility "${u.name}"?`)) {
-                            await deleteUtility(u.id);
-                          }
-                        }}
-                        className="h-8 text-xs font-bold rounded-xl px-2.5 text-[var(--destructive)] hover:text-[var(--destructive)] hover:bg-[var(--destructive)]/10 gap-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" /> Delete
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="generator" className="pt-3">
-          <Card className="max-w-xl mx-auto rounded-2xl border-[var(--border)] shadow-md overflow-hidden">
-            <CardHeader className="p-5 border-b border-[var(--border)]">
-              <CardTitle className="text-sm font-bold flex items-center gap-2 text-[var(--foreground)]">
-                <PlusCircle className="w-5 h-5 text-[var(--primary)]" /> Bulk Room Generator
-              </CardTitle>
-              <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-                Generate an entire sequence of rooms on a selected floor and category in a single database transaction.
-              </p>
-            </CardHeader>
-
-            <CardContent className="p-6">
-              <form onSubmit={handleBulkGenerateSubmit} className="space-y-4 text-xs">
-                <div>
-                  <label className="block font-bold text-[var(--muted-foreground)] mb-1">
-                    Target Floor *
-                  </label>
-                  <Select value={genFloorId} onValueChange={setGenFloorId}>
-                    <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]">
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {backendFloors.map(f => (
-                        <SelectItem key={f.id} value={String(f.id)}>
-                          Floor {f.floorNumber} — {f.name} {f.buildingName ? `(${f.buildingName})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[var(--muted-foreground)] mb-1">
-                    Room Category &amp; Pricing *
-                  </label>
-                  <Select value={genCategoryId} onValueChange={setGenCategoryId}>
-                    <SelectTrigger className="w-full h-9 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 text-xs font-bold text-[var(--foreground)]">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {backendCategories.map(c => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                          {c.name} {c.code ? `(${c.code})` : ''} — {formatCurrency(c.basePrice)}/night
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-bold text-[var(--muted-foreground)] mb-1">
-                      Start Room # *
-                    </label>
-                    <Input
-                      type="number"
-                      value={genStartNum}
-                      onChange={e => setGenStartNum(Number(e.target.value))}
-                      className="h-9 font-mono font-bold text-xs rounded-xl"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-[var(--muted-foreground)] mb-1">
-                      End Room # *
-                    </label>
-                    <Input
-                      type="number"
-                      value={genEndNum}
-                      onChange={e => setGenEndNum(Number(e.target.value))}
-                      className="h-9 font-mono font-bold text-xs rounded-xl"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[var(--muted-foreground)] mb-1">
-                    Room Number Prefix (Optional)
-                  </label>
-                  <Input
-                    placeholder="e.g. A- or BLK1- (leave blank for numbers only)"
-                    value={genPrefix}
-                    onChange={e => setGenPrefix(e.target.value)}
-                    className="h-9 font-mono text-xs rounded-xl"
-                  />
-                </div>
-
-                <div className="p-3 rounded-xl bg-[var(--muted)]/50 border border-[var(--border)] flex justify-between items-center text-xs">
-                  <span className="text-[var(--muted-foreground)] font-semibold">Total Rooms to Create:</span>
-                  <span className="font-mono font-black text-sm text-[var(--primary)]">
-                    {Math.max(0, genEndNum - genStartNum + 1)} units
-                  </span>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isGenerating}
-                  className="w-full bg-[var(--primary)] hover:opacity-90 text-[var(--primary-foreground)] font-bold h-10 rounded-xl shadow-md gap-2 text-xs"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {isGenerating ? 'Generating Rooms...' : `Generate ${Math.max(0, genEndNum - genStartNum + 1)} Rooms in Database`}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          {/* TAB 5: BULK GENERATOR */}
+          <TabsContent value="generator">
+            <BulkRoomGeneratorTab
+              floors={backendFloors}
+              categories={backendCategories}
+              onGenerate={createBulkRooms}
+            />
+          </TabsContent>
+        </Tabs>
       )}
 
-      {/* ─── MODALS ─────────────────────────────────────────────────────────── */}
-            {/* ─── SLIDE-OVER ROOM DETAIL DRAWER ─────────────────────────────────── */}
+      {/* ─── SLIDE-OVER ROOM DETAIL DRAWER ─────────────────────────────────── */}
       <RoomDetailDrawer
         room={selectedDrawerRoom}
         isOpen={!!selectedDrawerRoom}
         onClose={() => setSelectedDrawerRoom(null)}
         onEdit={(rm) => setEditingRoom(rm)}
         onDelete={(id, num) => handleDeleteRoom(id, num)}
-        onUpdateStatus={handleDrawerUpdateStatus}
+        onUpdateStatus={async (id, status) => {
+          await apiUpdateRoomStatus(id, status);
+          if (selectedDrawerRoom && selectedDrawerRoom.id === id) {
+            setSelectedDrawerRoom({ ...selectedDrawerRoom, status });
+          }
+        }}
       />
 
-<CreateBuildingModal
+      <CreateBuildingModal
         isOpen={showCreateBuildingModal}
         onClose={() => setShowCreateBuildingModal(false)}
         onSubmit={createBuilding}

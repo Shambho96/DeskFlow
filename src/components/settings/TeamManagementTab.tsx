@@ -189,14 +189,14 @@ export const TeamManagementTab: React.FC = () => {
             <select
               value={roleFilter}
               onChange={e => setRoleFilter(e.target.value)}
-              className="h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 text-xs text-[var(--foreground)] font-medium outline-none cursor-pointer"
+              className="h-9 px-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] font-semibold shadow-xs outline-none focus:border-[var(--primary)] cursor-pointer"
             >
               <option value="ALL">All Roles</option>
               <option value="MANAGER">Managers</option>
               <option value="STAFF">Staff</option>
             </select>
           ) : (
-            <div className="h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 text-xs text-[var(--muted-foreground)] font-medium flex items-center">
+            <div className="h-9 px-3 rounded-xl border border-[var(--border)] bg-[var(--muted)]/40 text-xs text-[var(--muted-foreground)] font-semibold flex items-center">
               Staff Only
             </div>
           )}
@@ -205,7 +205,7 @@ export const TeamManagementTab: React.FC = () => {
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 text-xs text-[var(--foreground)] font-medium outline-none cursor-pointer"
+            className="h-9 px-3 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] font-semibold shadow-xs outline-none focus:border-[var(--primary)] cursor-pointer"
           >
             <option value="ALL">All Status (Active & Deactivated)</option>
             <option value="ACTIVE">Active Only</option>
@@ -427,7 +427,7 @@ export const TeamManagementTab: React.FC = () => {
                   <select
                     value={pageSize}
                     onChange={e => setPageSize(Number(e.target.value))}
-                    className="h-7 px-2 rounded-md border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] font-medium outline-none cursor-pointer"
+                    className="h-8 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] font-semibold shadow-2xs outline-none focus:border-[var(--primary)] cursor-pointer"
                   >
                     <option value={5}>5</option>
                     <option value={10}>10</option>
